@@ -65,7 +65,21 @@ Short notes on *why*, and what was traded away.
 - [ ] Phase 7: monitoring (CloudWatch alarms, dashboards)
 - [ ] Phase 8: CI/CD with GitHub Actions
 - [ ] Lab: same API on EC2 + ALB, cost compared, then deleted
-- [ ] Later: Cloud Practitioner, more languages, community-written questions
+
+### Feature ideas (backlog)
+
+- [ ] **"Make your AWS account safe in 10 minutes"**: a free beginner guide (budgets, emergency brake, anomaly alerts)
+- [ ] **Live cost badge**: "This month: £0.00" shown on the site and in this README
+- [ ] **Monday account-health email**: what's running, what it cost, any security findings
+- [ ] **"Why did I get this wrong?"**: explains the specific trap the learner fell into
+- [ ] **Exam-countdown mode**: the final week shows only the learner's weak topics
+- [ ] **Accessibility**: narrated lessons, dyslexia-friendly font, large text, full keyboard use
+- [ ] **Low-data / offline mode**: download today's cards and study without signal
+- [ ] **Translated explanations** (e.g. Hindi, Tamil, Spanish, Arabic), translated once and stored
+- [ ] **Job-ready section**: "explain this architecture" interview practice and CV bullet examples
+- [ ] **Study buddies**: small groups with the same exam date
+- [ ] **More exams**: AWS Cloud Practitioner first, then others on the same engine
+- [ ] **Community questions**: written by people who passed, reviewed before publishing
 
 ## Licence
 
