@@ -6,7 +6,7 @@
 
 ## Why I'm building this
 
-I sat the AWS Certified Solutions Architect – Associate (SAA-C03) exam in October 2026 and scored 690. The pass mark is 720. The gap wasn't only knowledge. The real exam had long scenarios, options that differed by a single word, policy documents to read, and "Select THREE" questions, and I ran out of time. Most free practice material didn't train those skills.
+I sat the AWS Certified Solutions Architect – Associate (SAA-C03) exam in October 2026 and narrowly missed the pass mark. The gap wasn't only knowledge. It was reading long scenario questions with very similar answer options fast enough, and I ran out of time. Most free practice material didn't train that skill.
 
 CertBuddy is the tool I wished I'd had. It's free for everyone, with no adverts and no paywall.
 
