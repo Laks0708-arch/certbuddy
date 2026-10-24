@@ -27,10 +27,10 @@ for(const id in N){const[x,y,t,s,c]=N[id];const g=el("g",{class:"node"},gN);
   [a,b].forEach(tx=>{try{if(tx.getComputedTextLength()>132){tx.setAttribute("textLength",132);tx.setAttribute("lengthAdjust","spacingAndGlyphs")}}catch(e){}});
   const xx=el("text",{x:x+52,y:y-6,class:"x"},g);xx.textContent="✕";xx.style.display="none";
   nodeEl[id]={g,xx}}
-let cur=0,playing=false,raf=null,adv=null,dotEls=[];
+let cur=0,playing=false,raf=null,adv=null,dotEls=[],curItems=[];
 const reduce=matchMedia("(prefers-reduced-motion: reduce)").matches;
 /* ---- moving dots: one per flow, or a weighted stream when a step has several flows ---- */
-function animate(s){cancelAnimationFrame(raf);dotEls.forEach(d=>d.remove());dotEls=[];gL.innerHTML="";
+function animate(s,cycles){cancelAnimationFrame(raf);dotEls.forEach(d=>d.remove());dotEls=[];gL.innerHTML="";
   const valid=flowsOf(s).filter(f=>f.path&&f.path.length>1);if(!valid.length)return;
   const total=valid.reduce((a,f)=>a+(f.w||1),0);const n=valid.length===1?1:Math.min(10,Math.max(total,valid.length));
   const assign=[];valid.forEach((f,fi)=>{const c=Math.max(1,Math.round((f.w||1)/total*n));for(let k=0;k<c;k++)assign.push(fi)});
@@ -40,10 +40,10 @@ function animate(s){cancelAnimationFrame(raf);dotEls.forEach(d=>d.remove());dotE
     for(let i=0;i<pts.length-1;i++){const d=Math.hypot(pts[i+1][0]-pts[i][0],pts[i+1][1]-pts[i][1]);seg.push(d);tot+=d}
     const c=el("circle",{r:valid.length>1?6.5:8,class:"dot"+(kind?" "+kind:"")+(f.alt?" alt":"")},gD);
     return{pts,seg,tot,kind,c,off:k/order.length,dur:Math.max(1500,tot*(kind==="internet"?7:4))}});
-  dotEls=items.map(x=>x.c);
+  dotEls=items.map(x=>x.c);curItems=items;
   if(reduce){items.forEach(x=>{const p=x.pts[x.pts.length-1];x.c.setAttribute("cx",p[0]);x.c.setAttribute("cy",p[1])});return}
   const period=Math.max(...items.map(x=>x.dur))+700;let t0=null;
-  function f(ts){if(t0===null)t0=ts;items.forEach(x=>{const ph=(((ts-t0)/period)+x.off)%1;let d=ph*period/x.dur*x.tot;if(d>x.tot)d=x.tot;
+  function f(ts){if(t0===null)t0=ts;if(cycles&&ts-t0>period*cycles){parkDots();return}items.forEach(x=>{const ph=(((ts-t0)/period)+x.off)%1;let d=ph*period/x.dur*x.tot;if(d>x.tot)d=x.tot;
       let i=0;while(i<x.seg.length-1&&d>x.seg[i]){d-=x.seg[i];i++}const r=x.seg[i]?Math.min(d/x.seg[i],1):1;
       let jx=0,jy=0;if(x.kind==="internet"&&r<1){jx=Math.sin(ts/40)*4;jy=Math.cos(ts/55)*4}
       x.c.setAttribute("cx",x.pts[i][0]+(x.pts[i+1][0]-x.pts[i][0])*r+jx);x.c.setAttribute("cy",x.pts[i][1]+(x.pts[i+1][1]-x.pts[i][1])*r+jy)});
@@ -52,7 +52,7 @@ function animate(s){cancelAnimationFrame(raf);dotEls.forEach(d=>d.remove());dotE
 const dots=document.getElementById("dots"),cap=document.getElementById("caption");
 S.forEach((s,i)=>{const b=document.createElement("button");b.type="button";b.textContent=i+1;b.title=s.t;b.addEventListener("click",()=>manual(i));dots.appendChild(b)});
 function setCap(t){cap.textContent=t||"";cap.classList.toggle("live",!!t)}
-function show(i){cur=(i+S.length)%S.length;const s=S[cur];const ps=pathsOf(s);const lit=new Set([].concat(...ps,s.lit||[]));const down=new Set(s.down||[]);
+function show(i,cycles){cur=(i+S.length)%S.length;const s=S[cur];const ps=pathsOf(s);const lit=new Set([].concat(...ps,s.lit||[]));const down=new Set(s.down||[]);
   for(const id in nodeEl){const n=nodeEl[id];n.g.classList.toggle("dim",!lit.has(id)&&!down.has(id));n.g.classList.toggle("on",lit.has(id));n.g.classList.toggle("down",down.has(id));n.xx.style.display=down.has(id)?"":"none"}
   const on=new Set();ps.forEach(p=>{for(let k=0;k<p.length-1;k++)on.add(p[k]+">"+p[k+1])});
   for(const k in edgeEl){const e=edgeEl[k];e.classList.toggle("on",on.has(k));e.classList.toggle("internet",on.has(k)&&s.kind==="internet");e.classList.toggle("backbone",on.has(k)&&s.kind==="backbone")}
@@ -64,7 +64,7 @@ function show(i){cur=(i+S.length)%S.length;const s=S[cur];const ps=pathsOf(s);co
   document.getElementById("s-key").textContent=s.key;
   document.getElementById("s-trap").textContent=s.trap;
   [...dots.children].forEach((b,j)=>b.setAttribute("aria-current",j===cur?"true":"false"));
-  setCap("");animate(s)}
+  setCap("");animate(s,cycles)}
 /* ---- narrator: recorded Polly audio when the lesson has it, otherwise the browser voice ---- */
 const synth=window.speechSynthesis,canSpeak=!!(synth&&window.SpeechSynthesisUtterance);
 const useAudio=!!(L.audio&&L.audio.length===S.length);const audio=useAudio?new Audio():null;
@@ -87,7 +87,7 @@ else if(canSpeak){loadVoices();try{synth.addEventListener("voiceschanged",loadVo
   vtest.addEventListener("click",()=>{chooseVoice();hush();speak("Hello. This is how I will explain each step of the lesson. Global Accelerator, CloudFront, and S3 Transfer Acceleration.")})}
 else{vbtn.hidden=true;rsel.parentElement.hidden=true;vsel.parentElement.hidden=true;vtest.hidden=true;vhint.textContent="This browser has no built-in voice, so the lesson plays silently with subtitles. Try Chrome, Edge or Safari for narration."}
 const sentences=t=>(t.match(/[^.!?]+[.!?]*/g)||[t]).map(x=>x.trim()).filter(Boolean);
-function hush(){tok++;story.classList.remove("speaking");setCap("");if(audio){try{audio.pause()}catch(e){}audio.ontimeupdate=audio.onended=audio.onerror=null}if(canSpeak)try{synth.cancel()}catch(e){}}
+function hush(){tok++;story.classList.remove("speaking");setCap("");if(audio){try{audio.pause()}catch(e){}audio.ontimeupdate=audio.onended=audio.onerror=audio.onloadedmetadata=null}if(canSpeak)try{synth.cancel()}catch(e){}}
 function speak(text,done){if(!canSpeak||!voiceOn){done&&done();return}
   hush();const my=tok;const parts=sentences(text);let i=0,fin=false;story.classList.add("speaking");
   const safety=setTimeout(end,text.length*95/rate+5000);
@@ -98,24 +98,43 @@ function speak(text,done){if(!canSpeak||!voiceOn){done&&done();return}
 function playAudio(i,done){hush();const my=tok;const parts=sentences(narr(S[i]));const lens=parts.map(p=>p.length);const totalLen=lens.reduce((a,b)=>a+b,0)||1;let fin=false;
   story.classList.add("speaking");
   function end(){if(fin||my!==tok)return;fin=true;story.classList.remove("speaking");setCap("");done&&done()}
-  audio.src=L.audio[i];audio.playbackRate=rate/0.92;
+  audio.src=L.audio[i];audio.playbackRate=rate/0.92;audio.onloadedmetadata=()=>{if(my===tok&&audio.duration)runFill(audio.duration*1000/audio.playbackRate)};
   audio.ontimeupdate=()=>{if(my!==tok||!audio.duration)return;const at=audio.currentTime/audio.duration*totalLen;let acc=0,k=0;while(k<parts.length-1&&acc+lens[k]<at){acc+=lens[k];k++}setCap(parts[k])};
   audio.onended=end;audio.onerror=()=>{if(canSpeak){fin=true;speak(narr(S[i]),done)}else end()};
   const p=audio.play();if(p&&p.catch)p.catch(()=>{if(my!==tok)return;if(canSpeak){fin=true;speak(narr(S[i]),done)}else end()})}
 function say(i,done){if(useAudio)playAudio(i,done);else speak(narr(S[i]),done)}
-function playStep(){show(cur);if(voiceOn&&canVoice){say(cur,()=>{if(!playing)return;if(cur<S.length-1){cur++;playStep()}else stop()})}}
-function startTimer(){clearInterval(adv);adv=setInterval(()=>{if(cur<S.length-1)show(cur+1);else stop()},10000)}
-function stop(){playing=false;clearInterval(adv);hush();document.getElementById("play").textContent="▶ Play"}
-document.getElementById("play").addEventListener("click",()=>{if(playing){stop();return}playing=true;document.getElementById("play").textContent="❚❚ Pause";if(voiceOn&&canVoice)playStep();else startTimer()});
-function manual(i){stop();show(i);if(voiceOn&&canVoice)say(cur)}
-document.getElementById("next").addEventListener("click",()=>manual(cur+1));
-document.getElementById("prev").addEventListener("click",()=>manual(cur-1));
+const fill=document.getElementById("stepfill"),msg=document.getElementById("stepmsg"),nextBig=document.getElementById("nextbig"),replayBtn=document.getElementById("replay"),playBtn=document.getElementById("play");
+let stepT=null,cdT=null,fillRaf=null;
+function parkDots(){cancelAnimationFrame(raf);(curItems||[]).forEach(x=>{const p=x.pts[x.pts.length-1];x.c.setAttribute("cx",p[0]);x.c.setAttribute("cy",p[1])})}
+function setMsg(t,done){msg.textContent=t;msg.classList.toggle("done",!!done)}
+function clearStepTimers(){clearTimeout(stepT);clearInterval(cdT);cancelAnimationFrame(fillRaf)}
+function estimate(s){return Math.min(24000,Math.max(9000,narr(s).length*55))}
+function runFill(dur){cancelAnimationFrame(fillRaf);const t0=performance.now();const tick=t=>{const p=Math.min(1,(t-t0)/dur);fill.style.width=(p*100)+"%";if(p<1)fillRaf=requestAnimationFrame(tick)};fillRaf=requestAnimationFrame(tick)}
+function silentStep(){const d=estimate(S[cur])/(rate/0.92);runFill(d);stepT=setTimeout(stepDone,d)}
+function beginStep(i,wantVoice){clearStepTimers();hush();show(i);fill.style.width="0%";nextBig.classList.remove("pulse");
+  nextBig.textContent=cur<S.length-1?"Next step →":"Check questions ↓";
+  setMsg((playing?"▶ Playing · ":"")+"Step "+(cur+1)+" of "+S.length+": watch the dots and follow the subtitles");
+  if(wantVoice&&voiceOn&&canVoice){runFill(estimate(S[cur])/(rate/0.92));say(cur,stepDone)}else silentStep()}
+function stepDone(){clearStepTimers();fill.style.width="100%";parkDots();
+  if(cur>=S.length-1){playing=false;playBtn.textContent="▶ Play again";setMsg("🎉 Lesson complete! Now try the check questions below.",true);nextBig.classList.add("pulse");return}
+  if(playing){let n=5;setMsg("✅ Step "+(cur+1)+" done · next step in "+n+"s (press Pause to stay here)",true);
+    cdT=setInterval(()=>{n--;if(n<=0){clearInterval(cdT);beginStep(cur+1,true)}else setMsg("✅ Step "+(cur+1)+" done · next step in "+n+"s (press Pause to stay here)",true)},1000)}
+  else{setMsg("✅ Step "+(cur+1)+" of "+S.length+" done. Ready? Tap Next step →, or Replay to watch it again.",true);nextBig.classList.add("pulse")}}
+function stop(){playing=false;clearStepTimers();hush();parkDots();playBtn.textContent="▶ Play";setMsg("⏸ Paused on step "+(cur+1)+". Press Play to continue, or Next step.")}
+playBtn.addEventListener("click",()=>{if(playing){stop();return}playing=true;playBtn.textContent="❚❚ Pause";beginStep(cur>=S.length-1&&msg.classList.contains("done")?0:cur,true)});
+function manual(i){playing=false;playBtn.textContent="▶ Play";beginStep(i,true)}
+function goNext(){if(cur>=S.length-1){const q=document.getElementById("quiz");if(q)q.scrollIntoView({behavior:reduce?"auto":"smooth",block:"start"});return}manual(cur+1)}
+nextBig.addEventListener("click",goNext);
+replayBtn.addEventListener("click",()=>beginStep(cur,true));
+document.getElementById("next").addEventListener("click",goNext);
+document.getElementById("prev").addEventListener("click",()=>{if(cur>0)manual(cur-1)});
+document.addEventListener("keydown",e=>{if(/INPUT|SELECT|TEXTAREA|BUTTON/.test((e.target&&e.target.tagName)||""))return;if(e.key==="ArrowRight")goNext();else if(e.key==="ArrowLeft"&&cur>0)manual(cur-1)});
 vbtn.addEventListener("click",()=>{voiceOn=!voiceOn;vbtn.setAttribute("aria-pressed",voiceOn?"true":"false");vbtn.textContent=voiceOn?"🔊 Voice on":"🔇 Voice off";
-  if(!voiceOn){hush();if(playing)startTimer()}else if(playing){clearInterval(adv);playStep()}});
-rsel.addEventListener("change",()=>{rate=parseFloat(rsel.value)||0.92;if(audio)audio.playbackRate=rate/0.92;if(playing&&voiceOn&&!useAudio){playStep()}});
+  if(msg.classList.contains("done"))return;if(!voiceOn){hush();clearStepTimers();silentStep()}else beginStep(cur,true)});
+rsel.addEventListener("change",()=>{rate=parseFloat(rsel.value)||0.92;if(audio)audio.playbackRate=rate/0.92});
 const tb=document.getElementById("tbl");
 S.forEach((s,i)=>{const tr=document.createElement("tr");[(i+1)+". "+s.t,s.svc,s.trap].forEach(v=>{const td=document.createElement("td");td.textContent=v;tr.appendChild(td)});tb.appendChild(tr)});
-show(0);
+show(0,2);
 const qz=document.getElementById("quiz");
 L.quiz.forEach((x,qi)=>{const d=document.createElement("div");d.className="q";
   d.innerHTML='<span class="app"></span><p class="qq"></p><div class="opts"></div><p class="why" hidden></p>';

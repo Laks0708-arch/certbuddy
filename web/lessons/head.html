@@ -40,6 +40,16 @@ svg.map{display:block;width:100%;min-width:640px;height:auto}
 .flowlabel{fill:var(--accent);font:700 13px var(--mono)}
 .caption{min-height:3.4em;padding:10px 16px;border-top:1px solid var(--line);font-size:1.05rem;line-height:1.45;color:var(--muted);display:flex;align-items:center}
 .caption.live{color:var(--fg);background:var(--surface2)}
+.stepbar{border-top:1px solid var(--line);padding:10px 16px 12px;display:flex;flex-direction:column;gap:8px}
+.track{height:6px;border-radius:6px;background:var(--line);overflow:hidden}
+.track span{display:block;height:100%;width:0;background:var(--edge);border-radius:6px}
+.steprow{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;justify-content:space-between}
+#stepmsg{font-weight:700;font-size:.98rem}
+#stepmsg.done{color:var(--good)}
+.stepbtns{display:flex;gap:8px;flex-wrap:wrap}
+#nextbig.pulse{animation:pulse 1.4s ease-in-out infinite}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(245,185,66,.55)}50%{box-shadow:0 0 0 8px rgba(245,185,66,0)}}
+@media (prefers-reduced-motion:reduce){#nextbig.pulse{animation:none;outline:3px solid var(--accent)}}
 .dot.internet{fill:var(--bad)} .dot.backbone{fill:var(--edge)}
 .legend{display:flex;flex-wrap:wrap;gap:6px 16px;padding:10px 16px;border-top:1px solid var(--line);font-size:.82rem;color:var(--muted)}
 .legend span{display:inline-flex;align-items:center;gap:6px}
@@ -98,6 +108,13 @@ td:nth-child(3){color:var(--bad)}
   <div class="stage">
     <div class="mapbox"><svg class="map" id="map" viewBox="0 0 1000 600" role="img" aria-label="Animated architecture map"></svg></div>
     <div class="caption" id="caption" aria-live="polite"></div>
+    <div class="stepbar">
+      <div class="track" aria-hidden="true"><span id="stepfill"></span></div>
+      <div class="steprow">
+        <span id="stepmsg" aria-live="polite">Press ▶ Play to watch the whole lesson, or Next step to go at your own pace.</span>
+        <span class="stepbtns"><button type="button" id="replay">↻ Replay step</button><button type="button" id="nextbig" class="primary">Next step →</button></span>
+      </div>
+    </div>
     <div class="legend" id="legend"></div>
   </div>
 
