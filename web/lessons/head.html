@@ -1,0 +1,156 @@
+<title>__TITLE__</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Figtree:wght@400;600;700&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+/* Layout: cinema-dark single theme. Animated architecture map, story panel for the current step, summary table, then a check set in other apps. */
+:root{
+  --bg:#0d0f14; --surface:#161a22; --surface2:#1d222c; --fg:#ecedf2; --muted:#9aa2b4; --line:#2a303c;
+  --accent:#f5b942; --edge:#4fd1c5; --data:#a99bff; --msg:#f58bc4; --sec:#74e0a6; --compute:#f5b942; --net:#7b8496;
+  --good:#74e0a6; --bad:#ff8a80; --down:#ff5c5c;
+  --display:"Bricolage Grotesque",Georgia,serif; --body:"Figtree",system-ui,sans-serif; --mono:"IBM Plex Mono",ui-monospace,monospace;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font:17px/1.55 var(--body);margin:0}
+.wrap{max-width:1040px;margin:0 auto;padding-inline:16px;padding-block:24px 64px;display:flex;flex-direction:column;gap:22px}
+h1,h2{font-family:var(--display);margin:0;text-wrap:balance}
+h1{font-size:clamp(1.7rem,4vw,2.5rem);font-weight:800;line-height:1.1}
+h2{font-size:1.35rem;font-weight:600}
+p{margin:0}
+.sub{color:var(--muted);max-width:70ch}
+.eyebrow{font:500 .75rem var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--accent)}
+.stage{background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.mapbox{overflow-x:auto}
+svg.map{display:block;width:100%;min-width:640px;height:auto}
+.node rect.box{fill:var(--surface2);stroke-width:1.5;transition:opacity .3s}
+.node text{fill:var(--fg);font-family:var(--body)}
+.node .t{font-weight:700;font-size:14.5px}
+.node .s{fill:var(--muted);font-size:11.5px}
+.node{transition:opacity .3s}
+.node.dim{opacity:.25}
+.node.on rect.box{stroke-width:2.6}
+.node.down rect.box{stroke:var(--down)!important;fill:#3a1414}
+.node .x{fill:var(--down);font:800 22px var(--body)}
+.edge{stroke:var(--line);stroke-width:2;fill:none}
+.edge.on{stroke:var(--accent);stroke-width:3;stroke-dasharray:7 6;animation:flow 1s linear infinite}
+.edge.on.internet{stroke:var(--bad)}
+.edge.on.backbone{stroke:var(--edge);stroke-width:4}
+@keyframes flow{to{stroke-dashoffset:-13}}
+.dot{fill:var(--accent)}
+.dot.alt{fill:var(--msg)}
+.flowlabel{fill:var(--accent);font:700 13px var(--mono)}
+.caption{min-height:3.4em;padding:10px 16px;border-top:1px solid var(--line);font-size:1.05rem;line-height:1.45;color:var(--muted);display:flex;align-items:center}
+.caption.live{color:var(--fg);background:var(--surface2)}
+.dot.internet{fill:var(--bad)} .dot.backbone{fill:var(--edge)}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;padding:10px 16px;border-top:1px solid var(--line);font-size:.82rem;color:var(--muted)}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend i{width:10px;height:10px;border-radius:3px;display:inline-block}
+.controls{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+button{font:700 .95rem var(--body);padding:9px 16px;border-radius:9px;border:1px solid var(--line);background:var(--surface2);color:var(--fg);cursor:pointer}
+button.primary{background:var(--accent);color:#1a1405;border-color:var(--accent)}
+button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.rate{display:inline-flex;align-items:center;gap:6px;color:var(--muted);font-size:.9rem}
+select{font:600 .9rem var(--body);background:var(--surface2);color:var(--fg);border:1px solid var(--line);border-radius:8px;padding:7px 8px}
+#voice[aria-pressed="true"]{border-color:var(--edge);color:var(--edge)}
+.vhint{color:var(--muted);font-size:.88rem;margin-top:-10px}
+.speaking .panel:first-child{border-color:var(--edge)}
+.dots{display:flex;flex-wrap:wrap;gap:6px}
+.dots button{width:34px;height:34px;padding:0;font:500 .8rem var(--mono)}
+.dots button[aria-current="true"]{background:var(--accent);color:#1a1405;border-color:var(--accent)}
+.story{display:grid;grid-template-columns:1.3fr 1fr;gap:16px}
+.story>div{min-width:0}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px 20px;display:flex;flex-direction:column;gap:10px}
+.panel h2 .n{font-family:var(--mono);font-size:.9rem;color:var(--accent);margin-right:8px}
+.fact{font:500 .85rem var(--mono);color:var(--edge);background:var(--surface2);border:1px solid var(--line);border-radius:8px;padding:6px 10px;align-self:flex-start}
+.kv div{display:flex;flex-direction:column;gap:2px}
+.kv b{font:500 .72rem var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.kv .key{color:var(--accent);font-weight:700}
+.kv .trap{color:var(--bad)}
+.kv .svc{color:var(--good);font-weight:700}
+table{border-collapse:collapse;width:100%;font-size:.95rem}
+.tbl{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:14px}
+th,td{text-align:left;padding:10px 14px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font:500 .72rem var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+tr:last-child td{border-bottom:0}
+td:nth-child(2){color:var(--good);font-weight:700}
+td:nth-child(3){color:var(--bad)}
+.quiz{display:flex;flex-direction:column;gap:14px}
+.q{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px 18px;display:flex;flex-direction:column;gap:10px}
+.q .app{font:500 .72rem var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--edge)}
+.opts{display:flex;flex-direction:column;gap:8px}
+.opts button{text-align:left;font-weight:600;line-height:1.4}
+.opts button.right{border-color:var(--good);color:var(--good)}
+.opts button.wrong{border-color:var(--bad);color:var(--bad)}
+.why{color:var(--muted);font-size:.95rem}
+.foot{color:var(--muted);font-size:.9rem}
+.series{display:flex;flex-wrap:wrap;gap:8px 18px;font-size:.92rem}
+.series a{color:var(--edge)}
+@media (max-width:760px){.story{grid-template-columns:1fr}}
+@media (prefers-reduced-motion:reduce){.edge.on{animation:none}}
+</style>
+
+<div class="wrap">
+  <header style="display:flex;flex-direction:column;gap:8px">
+    <span class="eyebrow" id="eyebrow"></span>
+    <h1 id="h1"></h1>
+    <p class="sub" id="intro"></p>
+  </header>
+
+  <div class="stage">
+    <div class="mapbox"><svg class="map" id="map" viewBox="0 0 1000 600" role="img" aria-label="Animated architecture map"></svg></div>
+    <div class="caption" id="caption" aria-live="polite"></div>
+    <div class="legend" id="legend"></div>
+  </div>
+
+  <div class="controls">
+    <button id="prev" type="button">◀ Back</button>
+    <button id="play" type="button" class="primary">▶ Play</button>
+    <button id="next" type="button">Next ▶</button>
+    <button id="voice" type="button" aria-pressed="true">🔊 Voice on</button>
+    <label class="rate" for="vsel">Voice
+      <select id="vsel"></select>
+    </label>
+    <button id="vtest" type="button">Test voice</button>
+    <label class="rate" for="rate">Speed
+      <select id="rate"><option value="0.8">Slow</option><option value="0.92" selected>Normal</option><option value="1.05">Fast</option></select>
+    </label>
+    <div class="dots" id="dots" aria-label="Steps"></div>
+  </div>
+  <p class="vhint" id="vhint">Press ▶ Play and the narrator explains each step, then moves on by itself. If a voice is hard to understand, pick another one and press Test voice. The clearest voices are marked ★. Voices named Natural, Online, Google, Premium or Enhanced sound the most human. On a Mac, you can add better ones under System Settings → Accessibility → Spoken Content → System voice → Manage Voices (for example Serena or Daniel). Microsoft Edge on any computer includes very clear "Natural" voices.</p>
+
+  <div class="story">
+    <div class="panel">
+      <h2 id="s-title"></h2>
+      <p id="s-story"></p>
+      <span class="fact" id="s-fact" hidden></span>
+    </div>
+    <div class="panel kv">
+      <div><b>Service used</b><span class="svc" id="s-svc"></span></div>
+      <div><b>Exam key words</b><span class="key" id="s-key"></span></div>
+      <div><b>Trap answer</b><span class="trap" id="s-trap"></span></div>
+    </div>
+  </div>
+
+  <section style="display:flex;flex-direction:column;gap:12px">
+    <h2>All steps on one table</h2>
+    <div class="tbl"><table>
+      <thead><tr><th>What happens</th><th>Service</th><th>Trap</th></tr></thead>
+      <tbody id="tbl"></tbody>
+    </table></div>
+  </section>
+
+  <section class="quiz">
+    <h2>Check: same ideas, different apps</h2>
+    <p class="sub">These are set in other apps on purpose, so you have to spot the pattern rather than remember the answer.</p>
+    <div id="quiz" class="quiz"></div>
+  </section>
+
+  <section style="display:flex;flex-direction:column;gap:8px">
+    <h2>The series</h2>
+    <div class="series">
+      <a href="https://claude.ai/artifact/RKF9Sj2TcV9MKxRgd14YHL">1 · Streaming app</a>
+      <span id="series-rest"></span>
+    </div>
+  </section>
+
+  <p class="foot">A teaching model of how such an app could be built on AWS, not any company's actual design. Practice questions are original and are not taken from any real exam. Not affiliated with or endorsed by Amazon Web Services. AWS and related marks are trademarks of Amazon.com, Inc. or its affiliates.</p>
+</div>

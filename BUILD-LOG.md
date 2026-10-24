@@ -17,3 +17,17 @@ A short entry for every step: what I built, what I learned, and what it cost.
 - Cognito's free tier is 10,000 monthly users for email sign-in but only 50 for Google/Apple sign-in, so it pays to read pricing before choosing features
 
 **Cost:** $0.00
+
+## Lesson engine and content rules (24 Oct 2026)
+
+**Built**
+- Animated lesson engine: moving requests, failures, weighted traffic splits shown as streams of dots, subtitles, and a natural voice recorded once with Amazon Polly
+- Six lessons: streaming, multiplayer game, reading app (storage), food delivery (compute), banking (security), ticket sale (Route 53 + load balancers)
+- Lessons are plain data files, so the engine can teach any subject
+- CONTENT-RULES.md: no exam content, AWS trademark rules, sources, privacy
+
+**Learned**
+- Polly output can be stored and replayed indefinitely at no extra cost, so recording once beats generating speech every time
+- The AWS Certification Program Agreement treats all exam content as confidential, so every question has to be original
+
+**Cost:** about $0.08 of Polly (neural voice, ~5,000 characters), covered by credits

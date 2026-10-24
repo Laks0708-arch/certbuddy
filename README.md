@@ -15,11 +15,11 @@ CertBuddy is the tool I wished I'd had. It's free for everyone, with no adverts 
 - **Real-format practice:** long scenarios, near-identical options, policy exhibits, Select TWO and THREE, a 2-minute pace timer.
 - **Flashcards that remember you:** missed topics come back later in a *different* scenario (spaced repetition).
 - **Word-flip drills:** spot the one word that changes the answer, to train reading speed.
-- **Narrated app-story lessons:** see how services connect inside apps you already know.
+- **Narrated, animated app-story lessons:** watch requests move through a real app (streaming, gaming, banking, ticketing) with subtitles and a natural Polly voice. Six lessons are built so far ([web/lessons](web/lessons/)). Each lesson is just a data file, so the same engine can teach **any subject**.
 - **Progress by exam domain**, measured against the pass line.
 - **No sign-up needed.** Optional email sign-in saves progress across devices.
 
-All questions are original and written from the public exam guide and AWS documentation. **No exam dumps.**
+All questions are original and written from the public exam guide and AWS documentation. **No exam dumps.** See [CONTENT-RULES.md](CONTENT-RULES.md).
 
 ## Planned architecture (serverless, inside the AWS always-free tier)
 
@@ -60,7 +60,7 @@ Short notes on *why*, and what was traded away.
 - [ ] Phase 2: question engine + DynamoDB progress (Lambda)
 - [ ] Phase 3: optional sign-in (Cognito)
 - [ ] Phase 4: spaced repetition + daily reminder emails
-- [ ] Phase 5: narrated lessons (Polly)
+- [ ] Phase 5: narrated lessons on the live site (Polly). The lesson engine and 6 lessons are already built in `web/lessons`.
 - [ ] Phase 6: security hardening (least-privilege IAM, KMS, headers)
 - [ ] Phase 7: monitoring (CloudWatch alarms, dashboards)
 - [ ] Phase 8: CI/CD with GitHub Actions
@@ -80,6 +80,10 @@ Short notes on *why*, and what was traded away.
 - [ ] **Study buddies**: small groups with the same exam date
 - [ ] **More exams**: AWS Cloud Practitioner first, then others on the same engine
 - [ ] **Community questions**: written by people who passed, reviewed before publishing
+
+## Disclaimer
+
+CertBuddy is an independent study aid. It is not affiliated with or endorsed by Amazon Web Services. AWS and related marks are trademarks of Amazon.com, Inc. or its affiliates. No pass is guaranteed.
 
 ## Licence
 
