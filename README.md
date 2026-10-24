@@ -1,0 +1,72 @@
+# CertBuddy
+
+**A free, open-source exam coach for AWS certifications: real-format practice, narrated lessons and flashcards that remember what you miss.**
+
+> Status: 🚧 Phase 0 (account safety and project setup). Built in public, one phase at a time.
+
+## Why I'm building this
+
+I sat the AWS Certified Solutions Architect – Associate (SAA-C03) exam in October 2026 and scored 690. The pass mark is 720. The gap wasn't only knowledge. The real exam had long scenarios, options that differed by a single word, policy documents to read, and "Select THREE" questions, and I ran out of time. Most free practice material didn't train those skills.
+
+CertBuddy is the tool I wished I'd had. It's free for everyone, with no adverts and no paywall.
+
+## What it will do (v1: SAA-C03)
+
+- **Real-format practice:** long scenarios, near-identical options, policy exhibits, Select TWO and THREE, a 2-minute pace timer.
+- **Flashcards that remember you:** missed topics come back later in a *different* scenario (spaced repetition).
+- **Word-flip drills:** spot the one word that changes the answer, to train reading speed.
+- **Narrated app-story lessons:** see how services connect inside apps you already know.
+- **Progress by exam domain**, measured against the pass line.
+- **No sign-up needed.** Optional email sign-in saves progress across devices.
+
+All questions are original and written from the public exam guide and AWS documentation. **No exam dumps.**
+
+## Planned architecture (serverless, inside the AWS always-free tier)
+
+| Need | Service | Why |
+|---|---|---|
+| Website | Amazon S3 + CloudFront (origin access control) | Global, cached, private bucket, 1 TB/month free |
+| Sign-in (optional) | Amazon Cognito user pool, email sign-in | 10,000 monthly users free (social sign-in only has 50 free) |
+| API and logic | AWS Lambda | 1M requests/month free, scales to zero |
+| Progress data | Amazon DynamoDB | 25 GB free, single-digit-ms reads |
+| Daily reminders | Amazon EventBridge + SNS | Scheduled, 1M publishes/month free |
+| Narration | Amazon Polly, generated once and stored in S3 | No per-listen cost |
+| Infrastructure | Terraform + GitHub Actions | Reproducible, reviewed, automated deploys |
+
+## Decisions log
+
+Short notes on *why*, and what was traded away.
+
+| # | Decision | Why | Trade-off |
+|---|---|---|---|
+| 1 | Serverless instead of EC2 for the live app | Always-free allowances, no servers to patch, scales automatically | Cold starts; 15-minute Lambda limit (not an issue for this workload) |
+| 2 | Email sign-in instead of Google/Apple sign-in | Cognito federation is free for only 50 users/month vs 10,000 for email | Slightly more friction for users |
+| 3 | Save progress once per session, not per click | ~10× fewer Lambda calls, stays inside the free tier | Progress from an unfinished session can be lost |
+
+## Cost safety: how this free app can't surprise-bill me
+
+| Guard | What it does | Cost |
+|---|---|---|
+| Early-warning budget | Emails at 50% / 100% / forecast of **$5/month usage measured before credits** | Free |
+| **Emergency brake** (budget action) | At **$10/month**, automatically attaches a deny policy that blocks new paid resources (EC2, NAT, load balancers, RDS, Bedrock…) | Free (first two action budgets) |
+| Cost Anomaly Detection | Daily email for any unusual spend of **$1 or more** | Free |
+| Tagging | Every resource tagged `project=certbuddy` | Free |
+| One Region | Everything in `us-east-1`, so nothing gets forgotten elsewhere | n/a |
+
+## Roadmap
+
+- [x] Phase 0: account safety, budgets, repo
+- [ ] Phase 1: static site on S3 + CloudFront (Terraform)
+- [ ] Phase 2: question engine + DynamoDB progress (Lambda)
+- [ ] Phase 3: optional sign-in (Cognito)
+- [ ] Phase 4: spaced repetition + daily reminder emails
+- [ ] Phase 5: narrated lessons (Polly)
+- [ ] Phase 6: security hardening (least-privilege IAM, KMS, headers)
+- [ ] Phase 7: monitoring (CloudWatch alarms, dashboards)
+- [ ] Phase 8: CI/CD with GitHub Actions
+- [ ] Lab: same API on EC2 + ALB, cost compared, then deleted
+- [ ] Later: Cloud Practitioner, more languages, community-written questions
+
+## Licence
+
+[MIT](LICENSE): free to use, copy and build on.

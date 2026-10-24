@@ -1,0 +1,29 @@
+# Secrets: never commit these
+.env
+.env.*
+*.pem
+*.key
+*.p12
+credentials
+.aws/
+secrets.*
+
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+crash.log
+.terraform.lock.hcl.bak
+
+# Node / build
+node_modules/
+dist/
+build/
+.cache/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
