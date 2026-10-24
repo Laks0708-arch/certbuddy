@@ -1,0 +1,334 @@
+<title>CertBuddy Demo</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Nunito+Sans:wght@400;600;700;800&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+/* Layout: a working single-page demo of the study site. Top bar + page area + footer; a tour banner walks through every page. Progress is saved in this browser to show how saving works. */
+:root{
+  --bg:#f3f1ec; --surface:#ffffff; --surface2:#f8f7f3; --ink:#1d2330; --muted:#5f6878; --line:#e1ddd3;
+  --brand:#2f5bd3; --brand-soft:#e4ebfc; --good:#1f8a5b; --good-soft:#e1f3ea; --warn:#b5650d; --warn-soft:#fbeedd; --bad:#b83a3a; --bad-soft:#f8e3e3;
+  --display:"Fraunces",Georgia,serif; --body:"Nunito Sans",system-ui,sans-serif; --mono:"JetBrains Mono",ui-monospace,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#13161c; --surface:#1b1f27; --surface2:#20252e; --ink:#e8eaf0; --muted:#9aa3b3; --line:#2c323e;
+  --brand:#7ea2ff; --brand-soft:#1f2b4a; --good:#6fd3a2; --good-soft:#163026; --warn:#f0b26a; --warn-soft:#3a2a16; --bad:#f29393; --bad-soft:#3a1d1d; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#13161c; --surface:#1b1f27; --surface2:#20252e; --ink:#e8eaf0; --muted:#9aa3b3; --line:#2c323e;
+  --brand:#7ea2ff; --brand-soft:#1f2b4a; --good:#6fd3a2; --good-soft:#163026; --warn:#f0b26a; --warn-soft:#3a2a16; --bad:#f29393; --bad-soft:#3a1d1d; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:16px/1.55 var(--body);margin:0}
+h1,h2,h3{font-family:var(--display);margin:0;text-wrap:balance}
+h1{font-size:clamp(1.7rem,4vw,2.4rem);line-height:1.12}
+h2{font-size:1.35rem}
+h3{font-size:1.05rem}
+p{margin:0}
+button{font-family:var(--body)}
+button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid var(--brand);outline-offset:2px}
+.muted{color:var(--muted)}
+.eyebrow{font:500 .72rem var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--brand)}
+.tour{background:var(--brand);color:var(--surface);padding:10px 16px;display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;justify-content:center;font-size:.92rem}
+.tour b{font-weight:800}
+.tour button{font:800 .85rem var(--body);border:0;border-radius:8px;padding:6px 12px;cursor:pointer;background:var(--surface);color:var(--brand)}
+.tour button.ghost{background:transparent;color:var(--surface);border:1px solid var(--surface)}
+header.bar{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--surface);border-bottom:1px solid var(--line)}
+.barin{max-width:1040px;margin:0 auto;padding-inline:16px;padding-block:10px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.logo{font:700 1.2rem var(--display);color:var(--ink);text-decoration:none;display:flex;align-items:center;gap:8px}
+.logo i{width:26px;height:26px;border-radius:8px;background:var(--brand);display:inline-grid;place-items:center;color:var(--surface);font-style:normal;font-size:.9rem}
+nav.main{display:flex;gap:4px;flex-wrap:wrap;flex:1}
+nav.main a{text-decoration:none;color:var(--muted);font-weight:700;font-size:.92rem;padding:7px 11px;border-radius:9px}
+nav.main a[aria-current="page"]{background:var(--brand-soft);color:var(--brand)}
+.save{font:500 .76rem var(--mono);color:var(--good);background:var(--good-soft);padding:5px 9px;border-radius:999px;white-space:nowrap}
+main{max-width:1040px;margin:0 auto;padding-inline:16px;padding-block:24px 40px;display:flex;flex-direction:column;gap:18px;min-height:60vh}
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.grid2>*,.grid3>*{min-width:0}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px 18px;display:flex;flex-direction:column;gap:10px}
+.cta{font:800 1rem var(--body);background:var(--brand);color:var(--surface);border:0;border-radius:12px;padding:12px 18px;cursor:pointer;text-decoration:none;text-align:center;display:inline-block}
+.btn{font:700 .95rem var(--body);background:var(--surface);color:var(--brand);border:1px solid var(--brand);border-radius:12px;padding:10px 16px;cursor:pointer;text-decoration:none;text-align:center;display:inline-block}
+.btn.bad{color:var(--bad);border-color:var(--bad)}
+.row{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{font:700 .85rem var(--body);padding:8px 12px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--brand);border-color:var(--brand);color:var(--surface)}
+.chip[disabled]{opacity:.55;cursor:not-allowed}
+.task{display:flex;gap:12px;align-items:center;padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--surface2);text-decoration:none;color:var(--ink)}
+.task i{font-style:normal;font-size:1.4rem}
+.task div{flex:1;min-width:0}
+.task b{display:block}
+.task span{color:var(--muted);font-size:.88rem}
+.task .st{font:500 .72rem var(--mono);padding:3px 8px;border-radius:999px;background:var(--warn-soft);color:var(--warn);white-space:nowrap}
+.task .st.done{background:var(--good-soft);color:var(--good)}
+.bar8{height:9px;border-radius:9px;background:var(--line);overflow:hidden}
+.bar8 span{display:block;height:100%;border-radius:9px;background:var(--brand)}
+.flash{min-height:220px;align-items:center;justify-content:center;text-align:center;cursor:pointer}
+.flash .front{font:600 1.25rem/1.4 var(--display)}
+.flash .back{font-size:1.02rem}
+.q{font-size:1rem}
+.opt{font:600 .95rem/1.45 var(--body);text-align:left;padding:12px 14px;border-radius:12px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer;width:100%}
+.opt[aria-pressed="true"]{border-color:var(--brand);background:var(--brand-soft)}
+.opt.right{border-color:var(--good);background:var(--good-soft);color:var(--good)}
+.opt.wrong{border-color:var(--bad);background:var(--bad-soft);color:var(--bad)}
+.opts{display:flex;flex-direction:column;gap:8px}
+pre.code{margin:0;background:var(--surface2);border:1px solid var(--line);border-radius:10px;padding:12px;overflow-x:auto;font:500 .82rem/1.5 var(--mono)}
+.timer{font:500 .85rem var(--mono);color:var(--muted)}
+.fb{border-radius:12px;padding:12px 14px;background:var(--surface2);border:1px solid var(--line);display:flex;flex-direction:column;gap:6px}
+.fb b.ok{color:var(--good)} .fb b.no{color:var(--bad)}
+.dom{display:flex;flex-direction:column;gap:5px}
+.lesson{display:flex;flex-direction:column;gap:6px}
+.lesson .tag{font:500 .72rem var(--mono);color:var(--muted)}
+.sitemap{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.sitemap a,.sitemap div{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px;text-decoration:none;color:var(--ink);font-size:.9rem;display:flex;flex-direction:column;gap:2px;min-width:0}
+.sitemap b{font-size:.95rem}
+.flow{display:flex;flex-direction:column;gap:8px}
+.flow .stepx{display:grid;grid-template-columns:38px 1fr;gap:10px;align-items:start}
+.flow .num{width:34px;height:34px;border-radius:50%;background:var(--brand-soft);color:var(--brand);display:grid;place-items:center;font:800 .9rem var(--body)}
+table{border-collapse:collapse;width:100%;font-size:.94rem}
+.tbl{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font:500 .72rem var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+tr:last-child td{border-bottom:0}
+textarea{width:100%;min-height:140px;font:500 .8rem var(--mono);background:var(--surface2);color:var(--ink);border:1px solid var(--line);border-radius:10px;padding:10px}
+input[type="date"],select,input[type="email"]{font:600 .95rem var(--body);background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:10px;padding:9px 10px}
+label.f{display:flex;flex-direction:column;gap:4px;font-weight:700;font-size:.9rem}
+.toast{position:fixed;left:50%;bottom:calc(16px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:12px;font-weight:700;font-size:.9rem;opacity:0;transition:opacity .25s;pointer-events:none;z-index:9}
+.toast.on{opacity:1}
+footer{border-top:1px solid var(--line);background:var(--surface)}
+.footin{max-width:1040px;margin:0 auto;padding-inline:16px;padding-block:18px;display:flex;flex-direction:column;gap:6px;font-size:.84rem;color:var(--muted)}
+.footin a{color:var(--muted)}
+@media (max-width:760px){.grid2,.grid3{grid-template-columns:1fr}.sitemap{grid-template-columns:1fr 1fr}nav.main{order:3;flex-basis:100%}}
+@media (prefers-reduced-motion:reduce){.toast{transition:none}}
+</style>
+
+<div class="tour" id="tour"></div>
+<header class="bar"><div class="barin">
+  <a class="logo" href="#home"><i>CB</i>CertBuddy</a>
+  <nav class="main" aria-label="Main">
+    <a href="#today">Today</a><a href="#cards">Flashcards</a><a href="#practice">Practice</a><a href="#lessons">Lessons</a><a href="#progress">Progress</a><a href="#account">Account</a><a href="#how">How it works</a>
+  </nav>
+  <span class="save" id="save">✓ Saved on this device</span>
+</div></header>
+<main id="page"></main>
+<footer><div class="footin">
+  <p><b>Demo.</b> Nothing leaves this browser: progress is saved only on this device so you can see how saving works.</p>
+  <p>CertBuddy is an independent study aid. Practice questions are original and are not taken from any real exam. Not affiliated with or endorsed by Amazon Web Services. AWS and related marks are trademarks of Amazon.com, Inc. or its affiliates. · <a href="#rules">Content rules & privacy</a></p>
+</div></footer>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+(function(){
+const KEY="certbuddy-demo-v1";
+const fresh=()=>({exam:"",examDate:"",minutes:15,checked:false,streak:0,lastDay:"",cards:{},answers:[],done:{},lessons:{},signedIn:false,email:"",reminders:false,saved:null,synced:null});
+let S;try{S=Object.assign(fresh(),JSON.parse(localStorage.getItem(KEY)||"{}"))}catch(e){S=fresh()}
+const today=()=>new Date().toISOString().slice(0,10);
+function save(msg){S.saved=new Date().toISOString();try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}renderSave();if(msg)toast(msg)}
+function renderSave(){const el=document.getElementById("save");const t=S.saved?new Date(S.saved).toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"}):"";
+  el.textContent=S.signedIn?(S.synced?"☁ Synced "+new Date(S.synced).toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"}):"☁ Will sync at end of session"):(S.saved?"✓ Saved on this device "+t:"Not saved yet")}
+function toast(m){const t=document.getElementById("toast");t.textContent=m;t.classList.add("on");clearTimeout(toast.h);toast.h=setTimeout(()=>t.classList.remove("on"),1800)}
+function markDone(k){S.done[today()+":"+k]=true;if(S.lastDay!==today()){S.streak=S.lastDay?S.streak+1:1;S.lastDay=today()}save()}
+const isDone=k=>!!S.done[today()+":"+k];
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+/* ---------- content (all original) ---------- */
+const CARDS=[
+ {id:"c1",d:"Secure",f:"Users must sign in to your app with email or Google, and you never want to store passwords.",b:"Amazon Cognito user pool (email sign-in keeps you in the free tier)"},
+ {id:"c2",d:"Performance",f:"Viewers worldwide DOWNLOAD the same videos slowly.",b:"Amazon CloudFront (Transfer Acceleration is for UPLOADS)"},
+ {id:"c3",d:"Resilient",f:"Send users to a backup Region only when the main one is unhealthy.",b:"Route 53 failover routing with health checks"},
+ {id:"c4",d:"Cost",f:"Steady 24/7 use across EC2, Fargate and Lambda, and you change instance families often.",b:"Compute Savings Plan"},
+ {id:"c5",d:"Secure",f:"Block one bad IP address for a whole subnet.",b:"Network ACL deny rule (security groups can only allow)"},
+ {id:"c6",d:"Performance",f:"Same data read again and again from a database, and it must be faster.",b:"A cache: ElastiCache (or DAX for DynamoDB)"}
+];
+const QS=[
+ {id:"q1",d:"Secure",multi:1,stem:"A Lambda function runs in private subnets so that it can reach an Amazon RDS database in the same VPC. It must now read items from an Amazon DynamoDB table. The subnets have no route to the internet, and the company wants the lowest cost and no internet path.",
+  o:["Create a gateway VPC endpoint for DynamoDB and add it to the route tables of the Lambda function's subnets.","Create an interface VPC endpoint for DynamoDB and add a route to the endpoint in the route tables of the Lambda function's subnets.","Create a NAT gateway in a public subnet and add a default route to it in the route tables of the Lambda function's subnets.","Move the Lambda function out of the VPC and grant its execution role permission to read the DynamoDB table."],
+  a:[0],flip:"\"lowest cost\" and \"no internet path\"",why:"Gateway endpoints for S3 and DynamoDB are free and are added to route tables. Interface endpoints cost money and use DNS, not routes. NAT goes via the internet and costs money. Moving out of the VPC breaks access to RDS."},
+ {id:"q2",d:"Resilient",multi:2,stem:"A web application runs on EC2 instances in a single Availability Zone. During an AZ outage last month the site went down, and when instances are replaced users are logged out because sessions are stored in server memory. Which TWO actions should a solutions architect take? (Select TWO.)",
+  o:["Configure the Auto Scaling group to launch instances in subnets in at least two Availability Zones behind the Application Load Balancer.","Move session data to Amazon ElastiCache so that any instance can read any user's session.","Enable sticky sessions on the Application Load Balancer so that each user stays on the same instance.","Launch all instances in a cluster placement group to reduce network latency between them.","Replace the instances with one larger instance type to reduce the number of servers that can fail."],
+  a:[0,1],flip:"\"AZ outage\" and \"logged out when replaced\"",why:"Two AZs survive the outage; shared session storage stops logouts. Sticky sessions still lose the session when the instance dies. A cluster placement group puts everything in one AZ."},
+ {id:"q3",d:"Cost",multi:1,stem:"A company runs a steady workload 24 hours a day on Amazon EC2, AWS Fargate and AWS Lambda. Over the next three years it expects to change EC2 instance families and move some workloads from EC2 to containers. It wants the biggest discount while keeping this flexibility.",
+  o:["Purchase EC2 Instance Savings Plans for the instance family used most today, with a 3-year term.","Purchase Compute Savings Plans sized to the steady hourly spend, with a 3-year term.","Purchase Standard Reserved Instances for each instance family currently in use, with a 3-year term.","Purchase Convertible Reserved Instances for each instance family currently in use, with a 3-year term."],
+  a:[1],flip:"\"Fargate and Lambda\" and \"change instance families\"",why:"Only Compute Savings Plans cover EC2 of any family, Fargate and Lambda. Instance Savings Plans and Reserved Instances only cover EC2."},
+ {id:"q4",d:"Secure",multi:1,exhibit:'{\n  "Effect": "Allow",\n  "Action": "s3:GetObject",\n  "Resource": "arn:aws:s3:::team-docs/*",\n  "Condition": {\n    "IpAddress": { "aws:SourceIp": "203.0.113.0/24" }\n  }\n}',
+  stem:"A developer has the IAM policy statement shown. At the office they can download files from the team-docs bucket, but from home they get AccessDenied. What explains this?",
+  o:["The policy only allows s3:GetObject when the request comes from the 203.0.113.0/24 address range, which is the office network.","The policy is missing s3:ListBucket on arn:aws:s3:::team-docs, which is required before any object can be downloaded.","The Resource must be arn:aws:s3:::team-docs without /* for s3:GetObject to apply to the objects in the bucket.","The IpAddress condition only applies to requests made over HTTP, so HTTPS requests from home are denied."],
+  a:[0],flip:"the Condition block: aws:SourceIp",why:"The Allow only applies inside the condition. From home the source IP is outside the range, so nothing allows the request and the default deny applies. GetObject needs /*, and ListBucket isn't needed to download a known key."}
+];
+const DRILL=[
+ {s:"Users around the world ___ large files into one S3 bucket.",o:["download","upload"],a:1,ans:["CloudFront","S3 Transfer Acceleration"]},
+ {s:"No one, ___, may delete the records for 7 years.",o:["except administrators","including the root user"],a:1,ans:["Object Lock governance mode","Object Lock compliance mode"]},
+ {s:"Previews can be ___, are rarely opened, and must open instantly.",o:["re-created","the only copy"],a:0,ans:["S3 One Zone-IA","S3 Glacier Instant Retrieval / Standard-IA"]}
+];
+const LESSONS=[
+ {id:"l1",t:"How a Streaming App Runs on AWS",tag:"Streaming · 9 steps",u:"https://claude.ai/artifact/RKF9Sj2TcV9MKxRgd14YHL"},
+ {id:"l2",t:"How a Multiplayer Game Travels",tag:"Networking · 7 steps",u:"https://claude.ai/artifact/J7Ry1DKpHmzfgFWhc7uh6W"},
+ {id:"l3",t:"Where a Reading App Keeps Its Books",tag:"Storage · 10 steps",u:"https://claude.ai/artifact/DAFVdLskiSpCCW4zbk8FU8"},
+ {id:"l4",t:"How a Food Delivery App Computes",tag:"Compute · 8 steps",u:"https://claude.ai/artifact/KStwRujKGKyzGQer58bS9w"},
+ {id:"l5",t:"How a Banking App Stays Secure",tag:"Security · 10 steps",u:"https://claude.ai/artifact/5KupWH4mmjJuSfuqjd5Rtg"},
+ {id:"l6",t:"How a Ticket Sale Routes Its Fans",tag:"Route 53 + load balancers · 11 steps · Polly voice",u:"https://claude.ai/artifact/VEhnYC9GpTtkAPrP4617Gc"}
+];
+const DOMS=[["Secure",30],["Resilient",26],["Performance",24],["Cost",20]];
+
+/* ---------- tour ---------- */
+const TOUR=[["home","This is what a visitor sees first. No sign-up needed."],["start","They pick an exam, a date and how long they can study each day."],["today","Their daily plan. Everything links from here."],["cards","Flashcards remember what they miss: tap a card, then Again or Got it."],["practice","Real-format questions with a pace timer, Select TWO and a policy exhibit."],["lessons","Narrated app-story lessons open from the library."],["progress","Scores by exam domain, built from their answers."],["account","Optional sign-in syncs progress; they can delete everything."],["how","How the pages link and how saving works behind the scenes."]];
+function renderTour(route){const i=TOUR.findIndex(t=>t[0]===route);const el=document.getElementById("tour");
+  if(i<0){el.innerHTML='<span>🧭 <b>Demo tour</b>: see every page in order</span><button type="button" data-tour="0">Start tour</button>';}
+  else el.innerHTML='<span>🧭 <b>Tour '+(i+1)+'/'+TOUR.length+'</b>: '+esc(TOUR[i][1])+'</span>'+(i>0?'<button type="button" class="ghost" data-tour="'+(i-1)+'">Back</button>':'')+(i<TOUR.length-1?'<button type="button" data-tour="'+(i+1)+'">Next page →</button>':'<button type="button" data-tour="0">Start again</button>');
+  el.querySelectorAll("[data-tour]").forEach(b=>b.addEventListener("click",()=>{location.hash=TOUR[+b.dataset.tour][0]}))}
+
+/* ---------- pages ---------- */
+const P={};
+P.home=()=>`
+ <div class="card" style="gap:14px;padding:26px">
+  <span class="eyebrow">Free · no sign-up · no adverts</span>
+  <h1>Pass your AWS exam with 15 minutes a day.</h1>
+  <p class="muted" style="max-width:60ch">Exam-style practice with long scenarios and near-identical options, narrated app-story lessons, and flashcards that remember what you miss.</p>
+  <div class="chips"><a class="cta" href="#start">Start practising, free</a><a class="btn" href="#account">Sign in to sync progress</a></div>
+ </div>
+ <div class="grid3">
+  <div class="card"><h3>🎯 Exam-style practice</h3><p class="muted">Long scenarios, options that differ by one word, policy exhibits, Select TWO and THREE, a 2-minute pace timer.</p></div>
+  <div class="card"><h3>🎬 Narrated lessons</h3><p class="muted">Watch requests travel through a streaming app, a bank or a ticket sale, with subtitles.</p></div>
+  <div class="card"><h3>🔁 It remembers you</h3><p class="muted">Anything you miss comes back later, in a different app, until you've got it right three times.</p></div>
+ </div>`;
+P.start=()=>`
+ <div class="card"><span class="eyebrow">Step 1 of 2</span><h2>Set up your plan</h2>
+  <p class="muted">Pick your exam. More exams will be added using the same engine.</p>
+  <div class="chips" id="exams">
+   <button class="chip" type="button" data-exam="SAA-C03" aria-pressed="${S.exam==="SAA-C03"}">Solutions Architect – Associate (SAA-C03)</button>
+   <button class="chip" type="button" disabled>Cloud Practitioner · coming soon</button>
+   <button class="chip" type="button" disabled>Developer – Associate · coming soon</button>
+  </div>
+  <div class="grid2">
+   <label class="f" for="edate">Exam date (optional)<input type="date" id="edate" value="${esc(S.examDate)}"></label>
+   <label class="f" for="mins">Time per day<select id="mins">${[10,15,20,30].map(m=>`<option value="${m}" ${S.minutes==m?"selected":""}>${m} minutes</option>`).join("")}</select></label>
+  </div>
+  <div class="row"><span class="muted" style="font-size:.9rem">Saved on this device as soon as you continue.</span><button class="cta" type="button" id="go">Continue to a quick level check →</button></div>
+ </div>`;
+P.check=()=>{const q=[QS[0],QS[2],QS[3]];return `
+ <div class="card"><span class="eyebrow">Step 2 of 2 · Level check</span><h2>Three quick questions</h2><p class="muted">This shows which domain to start with. It isn't scored against you.</p></div>
+ ${q.map((x,i)=>`<div class="card"><b>${i+1}. ${esc(x.d)}</b><p class="q">${esc(x.stem)}</p><div class="opts">${x.o.map((o,j)=>`<button class="opt" type="button" data-q="${i}" data-o="${j}" aria-pressed="false">${String.fromCharCode(65+j)}. ${esc(o)}</button>`).join("")}</div></div>`).join("")}
+ <div class="row"><span></span><button class="cta" type="button" id="finish">See my plan →</button></div>`};
+P.today=()=>{if(!S.exam)return needStart();const due=dueCards().length;const days=S.examDate?Math.max(0,Math.ceil((new Date(S.examDate)-new Date(today()))/864e5)):null;
+ const tasks=[["cards","🃏",due+" flashcards due","Missed cards come back first · ~5 min",due===0||isDone("cards")],["drill","🔀","Word-flip drill","Spot the word that changes the answer · 3 min",isDone("drill")],["practice","📝","4 exam-style questions","With a 2-minute pace timer · ~8 min",isDone("practice")],["lessons","🎬","Lesson of the day: "+LESSONS[5].t,"Narrated, 11 steps · 8 min",!!S.lessons.l6]];
+ const n=tasks.filter(t=>t[4]).length;return `
+ <div class="row"><div><span class="eyebrow">${new Date().toLocaleDateString([], {weekday:"long",day:"numeric",month:"long"})}</span><h1>Today's plan</h1></div><span class="task" style="padding:8px 12px"><i>🔥</i><div><b>${S.streak}-day streak</b></div></span></div>
+ <div class="card"><div class="row"><b>${days!==null?days+" days to your exam":"No exam date set"}</b><span class="muted">${n} of ${tasks.length} done today</span></div><div class="bar8"><span style="width:${n/tasks.length*100}%"></span></div></div>
+ <div class="card">${tasks.map(t=>`<a class="task" href="#${t[0]}"><i>${t[1]}</i><div><b>${esc(t[2])}</b><span>${esc(t[3])}</span></div><span class="st ${t[4]?"done":""}">${t[4]?"Done":"To do"}</span></a>`).join("")}</div>
+ <p class="muted" style="font-size:.9rem">Every activity saves your progress on this device the moment you finish it. If you sign in, it also syncs to your account once at the end of the session.</p>`};
+function dueCards(){return CARDS.filter(c=>{const st=S.cards[c.id];return !st||st.due<=today()})}
+let fq=[],fi=0,fShow=false,fStats={g:0,a:0};
+P.cards=()=>{if(!S.exam)return needStart();if(!fq.length){fq=dueCards().map(c=>c.id);fi=0;fShow=false;fStats={g:0,a:0}}
+ if(fi>=fq.length){const sum=`<div class="card"><h2>Round finished 🎉</h2><p>${fStats.g} got it · ${fStats.a} to see again.</p><p class="muted">Cards you got right come back in 1, then 3, then 7 days. Cards you missed come back tomorrow, and in practice they reappear inside a different scenario.</p><div class="chips"><a class="cta" href="#today">Back to today</a><button class="btn" type="button" id="again">Practise all cards again</button></div></div>`;if(fq.length)markDone("cards");return sum}
+ const c=CARDS.find(x=>x.id===fq[fi]);return `
+ <div class="row"><h1>Flashcards</h1><span class="muted">${fi+1} / ${fq.length} · ${esc(c.d)}</span></div>
+ <div class="card flash" id="flip" role="button" tabindex="0" aria-label="Show answer">${fShow?`<p class="front">${esc(c.f)}</p><p class="back" style="color:var(--good);font-weight:800">${esc(c.b)}</p>`:`<p class="front">${esc(c.f)}</p><p class="muted">Tap to show the answer</p>`}</div>
+ ${fShow?`<div class="grid2"><button class="btn bad" type="button" id="fa">Again (tomorrow)</button><button class="cta" type="button" id="fg">Got it</button></div>`:""}`};
+let pq=0,pSel=[],pRes={},pStart=0,pTick=null,pTimerQ=null;
+P.practice=()=>{if(!S.exam)return needStart();if(pq>=QS.length){const right=QS.filter(q=>pRes[q.id]).length;return `
+ <div class="card"><h2>Set finished: ${right} / ${QS.length}</h2><p class="muted">Every answer is saved and feeds your Progress page. Missed questions come back as a different scenario in a few days.</p>
+ <div class="chips"><a class="cta" href="#progress">See my progress</a><button class="btn" type="button" id="redo">Try the set again</button></div></div>`}
+ const q=QS[pq];const answered=q.id in pRes;return `
+ <div class="row"><span class="eyebrow">Question ${pq+1} of ${QS.length} · ${esc(q.d)}${q.multi>1?" · Select "+(q.multi===2?"TWO":"THREE"):""}</span><span class="timer" id="tmr">⏱ 2:00</span></div>
+ <div class="card">${q.exhibit?`<pre class="code">${esc(q.exhibit)}</pre>`:""}<p class="q">${esc(q.stem)}</p>
+ <div class="opts">${q.o.map((o,j)=>{let cls="";if(answered){if(q.a.includes(j))cls="right";else if(pSel.includes(j))cls="wrong"}return `<button class="opt ${cls}" type="button" data-o="${j}" aria-pressed="${pSel.includes(j)}" ${answered?"disabled":""}>${String.fromCharCode(65+j)}. ${esc(o)}</button>`}).join("")}</div>
+ ${answered?`<div class="fb"><b class="${pRes[q.id]?"ok":"no"}">${pRes[q.id]?"✅ Correct":"❌ Not quite. Answer: "+q.a.map(i=>String.fromCharCode(65+i)).join(" + ")}</b><span><b>Flip words:</b> ${esc(q.flip)}</span><span class="muted">${esc(q.why)}</span></div><div class="row"><span></span><button class="cta" type="button" id="pn">${pq<QS.length-1?"Next question →":"Finish set"}</button></div>`
+ :`<div class="row"><span class="muted" style="font-size:.9rem">${q.multi>1?"Choose "+q.multi+" answers.":"Choose one answer."}</span><button class="cta" type="button" id="pc" ${pSel.length!==q.multi?"disabled":""}>Check answer</button></div>`}</div>`};
+let di=0,dRes=[];
+P.drill=()=>{if(!S.exam)return needStart();if(di>=DRILL.length){markDone("drill");return `<div class="card"><h2>Drill done: ${dRes.filter(Boolean).length}/${DRILL.length}</h2><p class="muted">Training your eye to find the one word that decides the answer is how you stop running out of time.</p><a class="cta" href="#today">Back to today</a></div>`}
+ const d=DRILL[di];return `<div class="row"><h1>Word-flip drill</h1><span class="muted">${di+1} / ${DRILL.length}</span></div>
+ <div class="card"><p class="q">${esc(d.s)}</p><p class="muted">Which word makes the answer <b>${esc(d.ans[d.a])}</b>?</p><div class="grid2">${d.o.map((o,j)=>`<button class="opt" type="button" data-d="${j}">${esc(o)}</button>`).join("")}</div><div id="dfb"></div></div>`};
+P.lessons=()=>`
+ <h1>Lessons</h1><p class="muted">Each lesson follows one real app, with a moving animation, subtitles and narration, then checks you with questions set in other apps. In the live site they play right here. In this demo they open in a new tab.</p>
+ <div class="grid2">${LESSONS.map(l=>`<div class="card lesson"><span class="tag">${esc(l.tag)}</span><h3>${esc(l.t)}</h3><div class="chips"><a class="cta" href="${l.u}" target="_blank" rel="noopener" data-l="${l.id}">▶ Watch</a><button class="btn" type="button" data-w="${l.id}">${S.lessons[l.id]?"✓ Watched":"Mark as watched"}</button></div></div>`).join("")}</div>`;
+P.progress=()=>{if(!S.exam)return needStart();const by={};DOMS.forEach(([d])=>by[d]={r:0,n:0});S.answers.forEach(a=>{if(by[a.d]){by[a.d].n++;if(a.ok)by[a.d].r++}});
+ const tot=S.answers.length,ok=S.answers.filter(a=>a.ok).length;const pct=tot?Math.round(ok/tot*100):0;
+ const missed=[...new Set(S.answers.filter(a=>!a.ok).map(a=>a.q))].map(id=>QS.find(q=>q.id===id)).filter(Boolean);return `
+ <h1>Your progress</h1>
+ <div class="grid2"><div class="card"><span class="eyebrow">Overall</span><p style="font:700 2rem var(--display)">${tot?pct+"%":"–"}</p><p class="muted">${tot} answers saved · pass line ≈ 72%</p></div>
+ <div class="card"><span class="eyebrow">Streak & lessons</span><p style="font:700 2rem var(--display)">🔥 ${S.streak}</p><p class="muted">${Object.keys(S.lessons).length} of ${LESSONS.length} lessons watched</p></div></div>
+ <div class="card"><h3>By exam domain</h3>${DOMS.map(([d,w])=>{const b=by[d];const p=b.n?Math.round(b.r/b.n*100):0;const col=!b.n?"var(--line)":p>=72?"var(--good)":p>=55?"var(--warn)":"var(--bad)";return `<div class="dom"><div class="row"><span>${d} · ${w}% of the exam</span><b>${b.n?p+"%":"no answers yet"}</b></div><div class="bar8"><span style="width:${b.n?p:0}%;background:${col}"></span></div></div>`}).join("")}</div>
+ <div class="card"><h3>Coming back for you</h3>${missed.length?missed.map(q=>`<div class="task"><i>🔁</i><div><b>${esc(q.flip)}</b><span>${esc(q.d)} · returns in a different scenario</span></div></div>`).join(""):'<p class="muted">Nothing missed yet. Try the practice set.</p>'}</div>`};
+P.account=()=>`
+ <h1>Account</h1>
+ <div class="grid2">
+  <div class="card"><h3>Sign in (optional)</h3>${S.signedIn?`<p>Signed in as <b>${esc(S.email)}</b></p><p class="muted">Your progress syncs to your account once at the end of each session, so it's on every device.</p><div class="chips"><button class="btn" type="button" id="sync">Sync now</button><button class="btn" type="button" id="out">Sign out</button></div>`
+  :`<p class="muted">You can use everything without an account. Signing in only saves progress across devices and turns on reminder emails.</p><label class="f" for="em">Email<input type="email" id="em" placeholder="you@example.com" autocomplete="email"></label><button class="cta" type="button" id="in">Send me a sign-in code (demo)</button><p class="muted" style="font-size:.85rem">Demo only: nothing is sent and no account is created.</p>`}</div>
+  <div class="card"><h3>Reminders</h3><label class="row" for="rem" style="justify-content:flex-start;gap:10px"><input type="checkbox" id="rem" ${S.reminders?"checked":""} ${S.signedIn?"":"disabled"}> Email me "your cards for today" each morning</label><p class="muted" style="font-size:.88rem">${S.signedIn?"One email a day, unsubscribe any time.":"Sign in first to turn on reminders."}</p></div>
+ </div>
+ <div class="card"><h3>Your data</h3><p class="muted">This is everything saved about you. You can copy it, or delete it all.</p><textarea readonly id="dump" aria-label="Your saved data">${esc(JSON.stringify(S,null,2))}</textarea>
+  <div class="chips"><button class="btn" type="button" id="copy">Copy my data</button><button class="btn bad" type="button" id="del">Delete everything</button></div><div id="delc"></div></div>`;
+P.how=()=>`
+ <h1>How it all works</h1>
+ <div class="card"><h3>How the pages link</h3><p class="muted">Every page is one tap from the top bar. The Today page is the hub that sends learners to each activity.</p>
+  <div class="sitemap">
+   <a href="#home"><b>Home</b><span class="muted">→ Start · Sign in</span></a><a href="#start"><b>Set up plan</b><span class="muted">exam, date, minutes → Level check</span></a><a href="#check"><b>Level check</b><span class="muted">3 questions → Today</span></a><a href="#today"><b>Today (hub)</b><span class="muted">→ all activities</span></a>
+   <a href="#cards"><b>Flashcards</b><span class="muted">Again / Got it → Today</span></a><a href="#drill"><b>Word-flip drill</b><span class="muted">→ Today</span></a><a href="#practice"><b>Practice</b><span class="muted">timer, exhibit → Progress</span></a><a href="#lessons"><b>Lessons</b><span class="muted">6 narrated lessons</span></a>
+   <a href="#progress"><b>Progress</b><span class="muted">domains, comeback list</span></a><a href="#account"><b>Account</b><span class="muted">sign-in, reminders, data</span></a><a href="#rules"><b>Rules & privacy</b><span class="muted">linked in every footer</span></a><a href="#how"><b>How it works</b><span class="muted">this page</span></a>
+  </div></div>
+ <div class="grid2">
+ <div class="card"><h3>How a session is saved</h3><div class="flow">
+  <div class="stepx"><span class="num">1</span><p><b>As they study</b>, each answer and card result is saved instantly in the browser (local storage). It works offline and without an account.</p></div>
+  <div class="stepx"><span class="num">2</span><p><b>If signed in</b> (Cognito, email), the app sends one batch to the API at the end of the session instead of one call per click.</p></div>
+  <div class="stepx"><span class="num">3</span><p><b>API Gateway → Lambda</b> checks the sign-in token and writes the batch to <b>DynamoDB</b>, keyed by user.</p></div>
+  <div class="stepx"><span class="num">4</span><p><b>On another device</b>, signing in downloads the latest progress, so they carry on where they left off.</p></div>
+  <div class="stepx"><span class="num">5</span><p><b>Every morning</b>, EventBridge triggers a Lambda that emails each opted-in learner their cards for the day.</p></div>
+ </div></div>
+ <div class="card"><h3>What runs where (always-free tier)</h3><div class="tbl"><table><thead><tr><th>Part</th><th>AWS service</th></tr></thead><tbody>
+  <tr><td>Website + lessons</td><td>S3 + CloudFront (private bucket, OAC)</td></tr>
+  <tr><td>Optional sign-in</td><td>Cognito user pool, email</td></tr>
+  <tr><td>Save and sync</td><td>API Gateway or Lambda URL → Lambda → DynamoDB</td></tr>
+  <tr><td>Daily reminders</td><td>EventBridge → Lambda → SNS / email</td></tr>
+  <tr><td>Narration</td><td>Polly, recorded once, stored in S3</td></tr>
+  <tr><td>Cost safety</td><td>Budgets + automatic brake + anomaly alerts</td></tr>
+ </tbody></table></div></div></div>`;
+P.rules=()=>`
+ <h1>Content rules & privacy</h1>
+ <div class="grid2">
+ <div class="card"><h3>What we promise</h3><ul style="margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:6px">
+  <li><b>Original questions only</b>, written from the public exam guide and AWS documentation. Never real exam content and never "dumps", which break the AWS Certification Program Agreement and can cost you your certificate.</li>
+  <li>We say <b>exam-style</b>, never "real exam questions".</li>
+  <li><b>No AWS logos</b> and no suggestion that AWS endorses us. AWS and related marks are trademarks of Amazon.com, Inc. or its affiliates.</li>
+  <li>Explanations are in our own words, with links to AWS documentation.</li>
+  <li><b>No pass guarantees.</b> We're a study aid.</li></ul></div>
+ <div class="card"><h3>Your privacy (UK GDPR)</h3><ul style="margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:6px">
+  <li>No adverts and no tracking cookies.</li>
+  <li>Without an account, everything stays in your browser.</li>
+  <li>With an account we store only your email and your study progress.</li>
+  <li>We never sell or share your data.</li>
+  <li>Delete everything at any time from <a href="#account">Account</a>.</li></ul></div></div>`;
+function needStart(){return `<div class="card"><h2>Let's set up your plan first</h2><p class="muted">It takes 20 seconds and is saved on this device.</p><a class="cta" href="#start">Set up my plan</a></div>`}
+
+/* ---------- router + handlers ---------- */
+function route(){const r=(location.hash||"#home").slice(1);const k=P[r]?r:"home";const page=document.getElementById("page");
+  if(k!=="practice"){clearInterval(pTick);pTimerQ=null}
+  page.innerHTML=P[k]();document.querySelectorAll("nav.main a").forEach(a=>a.setAttribute("aria-current",a.getAttribute("href")==="#"+k?"page":"false"));
+  renderTour(k);bind(k);window.scrollTo(0,0)}
+function bind(k){const $=s=>document.getElementById(s);
+ if(k==="start"){document.querySelectorAll("[data-exam]").forEach(b=>b.addEventListener("click",()=>{S.exam=b.dataset.exam;document.querySelectorAll("[data-exam]").forEach(x=>x.setAttribute("aria-pressed",x===b))}));
+  $("go").addEventListener("click",()=>{if(!S.exam){S.exam="SAA-C03"}S.examDate=$("edate").value;S.minutes=+$("mins").value;save("Plan saved on this device");location.hash="check"})}
+ if(k==="check"){const sel={};document.querySelectorAll(".opt[data-q]").forEach(b=>b.addEventListener("click",()=>{const q=b.dataset.q;document.querySelectorAll('.opt[data-q="'+q+'"]').forEach(x=>x.setAttribute("aria-pressed",x===b));sel[q]=+b.dataset.o}));
+  $("finish").addEventListener("click",()=>{[QS[0],QS[2],QS[3]].forEach((x,i)=>{if(sel[i]!==undefined)S.answers.push({q:x.id,d:x.d,ok:x.a.length===1&&x.a[0]===sel[i],t:Date.now()})});S.checked=true;save("Level check saved");location.hash="today"})}
+ if(k==="cards"){const f=$("flip");if(f){const show=()=>{fShow=true;route()};f.addEventListener("click",show);f.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();show()}})}
+  const step=(ok)=>{const id=fq[fi];const st=S.cards[id]||{box:0};st.box=ok?Math.min(st.box+1,3):0;const days=ok?[1,3,7,14][st.box]:1;const d=new Date();d.setDate(d.getDate()+days);st.due=d.toISOString().slice(0,10);S.cards[id]=st;
+    if(ok)fStats.g++;else{fStats.a++;fq.push(id)}fi++;fShow=false;save(ok?"Saved: back in "+days+" day"+(days>1?"s":""):"Saved: you'll see it again soon");route()};
+  $("fg")&&$("fg").addEventListener("click",()=>step(true));$("fa")&&$("fa").addEventListener("click",()=>step(false));
+  $("again")&&$("again").addEventListener("click",()=>{fq=CARDS.map(c=>c.id);fi=0;fShow=false;fStats={g:0,a:0};route()})}
+ if(k==="practice"){const q=QS[pq];
+  if(q&&!(q.id in pRes)&&pTimerQ!==q.id){clearInterval(pTick);pTimerQ=q.id;pStart=Date.now();pTick=setInterval(()=>{const tm=document.getElementById("tmr");const left=Math.max(0,120-Math.floor((Date.now()-pStart)/1000));if(tm)tm.textContent="⏱ "+Math.floor(left/60)+":"+String(left%60).padStart(2,"0")+(left===0?" · move on, flag it":"");if(left===0)clearInterval(pTick)},500)}
+  document.querySelectorAll(".opt[data-o]").forEach(b=>b.addEventListener("click",()=>{const j=+b.dataset.o;if(q.multi===1)pSel=[j];else pSel=pSel.includes(j)?pSel.filter(x=>x!==j):(pSel.length<q.multi?pSel.concat(j):pSel);route()}));
+  $("pc")&&$("pc").addEventListener("click",()=>{clearInterval(pTick);const ok=pSel.length===q.a.length&&q.a.every(a=>pSel.includes(a));pRes[q.id]=ok;S.answers.push({q:q.id,d:q.d,ok,t:Date.now()});save("Answer saved");route()});
+  $("pn")&&$("pn").addEventListener("click",()=>{pq++;pSel=[];if(pq>=QS.length)markDone("practice");route()});
+  $("redo")&&$("redo").addEventListener("click",()=>{pq=0;pSel=[];pRes={};pTimerQ=null;route()})}
+ if(k==="drill"){document.querySelectorAll("[data-d]").forEach(b=>b.addEventListener("click",()=>{const d=DRILL[di];const ok=+b.dataset.d===d.a;dRes[di]=ok;
+   document.querySelectorAll("[data-d]").forEach(x=>{x.disabled=true;if(+x.dataset.d===d.a)x.classList.add("right");else if(x===b)x.classList.add("wrong")});
+   $("dfb").innerHTML='<div class="fb" style="margin-top:10px"><b class="'+(ok?"ok":"no")+'">'+(ok?"✅ Yes":"❌ Not this one")+'</b><span>"'+esc(d.o[0])+'" → '+esc(d.ans[0])+' · "'+esc(d.o[1])+'" → '+esc(d.ans[1])+'</span><button class="cta" type="button" id="dn">Next →</button></div>';
+   $("dn").addEventListener("click",()=>{di++;route()})}))}
+ if(k==="lessons"){document.querySelectorAll("[data-w]").forEach(b=>b.addEventListener("click",()=>{S.lessons[b.dataset.w]=true;save("Lesson marked as watched");route()}));
+  document.querySelectorAll("[data-l]").forEach(a=>a.addEventListener("click",()=>{S.lessons[a.dataset.l]=true;save()}))}
+ if(k==="account"){$("in")&&$("in").addEventListener("click",()=>{const v=$("em").value.trim();if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v)){toast("Enter an email address like you@example.com");return}S.signedIn=true;S.email=v;S.synced=new Date().toISOString();save("Signed in (demo). Progress synced");route()});
+  $("out")&&$("out").addEventListener("click",()=>{S.signedIn=false;S.reminders=false;S.synced=null;save("Signed out. Progress stays on this device");route()});
+  $("sync")&&$("sync").addEventListener("click",()=>{S.synced=new Date().toISOString();save("Synced to your account (demo)");route()});
+  $("rem")&&$("rem").addEventListener("change",e=>{S.reminders=e.target.checked;save(S.reminders?"Morning reminders on":"Reminders off")});
+  $("copy").addEventListener("click",()=>{const t=$("dump");try{navigator.clipboard.writeText(t.value).then(()=>toast("Copied"),()=>{t.select();toast("Selected: press Copy")})}catch(e){t.select();toast("Selected: press Copy")}});
+  $("del").addEventListener("click",()=>{$("delc").innerHTML='<div class="fb"><b class="no">Delete all progress, settings and sign-in on this device?</b><div class="chips"><button class="btn bad" type="button" id="dy">Yes, delete everything</button><button class="btn" type="button" id="dn2">Cancel</button></div></div>';
+   $("dy").addEventListener("click",()=>{S=fresh();try{localStorage.removeItem(KEY)}catch(e){}fq=[];pq=0;pSel=[];pRes={};di=0;dRes=[];renderSave();toast("Everything deleted");location.hash="home"});$("dn2").addEventListener("click",()=>{$("delc").innerHTML=""})})}
+}
+window.addEventListener("hashchange",route);renderSave();route();
+})();
+</script>
