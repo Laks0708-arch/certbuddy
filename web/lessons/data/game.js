@@ -62,3 +62,4 @@ quiz:[
   o:["Global Accelerator with two endpoint groups","Route 53 weighted records at 50/50","Route 53 failover records with a health check"],a:2,
   w:"A website with a domain name, the lowest cost and an acceptable short delay mean Route 53 failover. Global Accelerator would work but costs more, and weighted routing doesn't fail over."}
 ]};
+window.LESSON.audio=Array.from({length:7},(_,k)=>"audio/l2-"+String(k+1).padStart(2,"0")+".mp3");

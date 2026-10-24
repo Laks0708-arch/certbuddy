@@ -77,3 +77,4 @@ quiz:[
   o:["A lifecycle rule to Standard-IA after 30 days","S3 Intelligent-Tiering","A lifecycle rule to Glacier Deep Archive after 30 days"],a:1,
   w:"An unpredictable pattern with no retrieval fees means Intelligent-Tiering. Standard-IA charges for retrievals, and Deep Archive takes hours."}
 ]};
+window.LESSON.audio=Array.from({length:10},(_,k)=>"audio/l3-"+String(k+1).padStart(2,"0")+".mp3");

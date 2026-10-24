@@ -67,3 +67,4 @@ quiz:[
   o:["An SNS topic fanning out to an SQS queue for each consumer","A single SQS queue polled by all three services","A Lambda function that calls each service one after another"],a:0,
   w:"One event, several independent consumers, nothing lost means SNS → SQS fan-out."}
 ]};
+window.LESSON.audio=Array.from({length:8},(_,k)=>"audio/l4-"+String(k+1).padStart(2,"0")+".mp3");

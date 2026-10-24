@@ -63,3 +63,4 @@ quiz:[
   o:["Enable S3 Transfer Acceleration and load photos from the accelerated endpoint.","Use CloudFront with origin access control, and allow only the distribution in the bucket policy.","Replicate the bucket to sa-east-1 and make the replica public."],a:1,
   w:"This is step 3 again, and your old trap. Viewers downloading means CloudFront, and 'not reachable directly' means OAC. Transfer Acceleration only speeds up uploads into the bucket."}
 ]};
+window.LESSON.audio=Array.from({length:9},(_,k)=>"audio/l1-"+String(k+1).padStart(2,"0")+".mp3");

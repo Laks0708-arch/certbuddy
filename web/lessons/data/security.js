@@ -78,3 +78,4 @@ quiz:[
   o:["AWS Config","AWS CloudTrail","AWS Security Hub"],a:1,
   w:"This is step 10. 'Who did what, and when' is CloudTrail. Config shows what changed and whether it's compliant, not who called the API."}
 ]};
+window.LESSON.audio=Array.from({length:10},(_,k)=>"audio/l5-"+String(k+1).padStart(2,"0")+".mp3");
