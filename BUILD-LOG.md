@@ -31,3 +31,28 @@ A short entry for every step: what I built, what I learned, and what it cost.
 - The AWS Certification Program Agreement treats all exam content as confidential, so every question has to be original
 
 **Cost:** about $0.08 of Polly (neural voice, ~5,000 characters), covered by credits
+
+## Phase 1: first public page (25 Oct 2026)
+
+**Built** (all with Terraform, in `infra/phase1/`)
+- Private S3 bucket: Block Public Access on, ACLs disabled, encryption at rest (SSE-S3)
+- CloudFront distribution: HTTPS only (HTTP redirects to HTTPS), managed caching policy, cheapest price class
+- Origin access control (OAC), with a bucket policy that only allows this one distribution (`AWS:SourceArn` condition)
+- The home page plus all six narrated lessons and their audio, uploaded as S3 objects
+- Live at https://d2hupot0oe0kpk.cloudfront.net
+
+**Tested**
+- First visit: `x-cache: Miss from cloudfront` (edge MAN51, Manchester); second visit: `Hit`, served from the edge's cache
+- Opening the bucket URL directly returns `AccessDenied`, so the bucket really is private
+- Used a CloudFront invalidation (`/*`) after updating the site
+
+**Broke it on purpose**
+- Changed one character of the distribution ARN in the bucket policy by hand, and the site returned `403 AccessDenied`
+- `terraform plan` detected the drift and showed the exact one-character difference; one `terraform apply` fixed it
+
+**Learned**
+- Without the `AWS:SourceArn` condition, any CloudFront distribution in any account could read the bucket (the "confused deputy" problem)
+- Updates may not appear until cached copies expire (`max-age`) or are invalidated
+- The Terraform AWS provider couldn't read the CLI's `aws login` session directly, so I exported temporary credentials first
+
+**Cost:** $0.00 (CloudFront's always-free 1 TB/month; a few MB in S3)

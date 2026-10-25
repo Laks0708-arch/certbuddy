@@ -2,7 +2,7 @@
 
 **A free, open-source exam coach for AWS certifications: real-format practice, narrated lessons and flashcards that remember what you miss.**
 
-> Status: 🚧 Phase 0 (account safety and project setup). Built in public, one phase at a time.
+> Status: 🟢 **Live preview:** https://d2hupot0oe0kpk.cloudfront.net · Phase 1 done (S3 + CloudFront + OAC with Terraform). Built in public, one phase at a time.
 
 ## Why I'm building this
 
@@ -56,7 +56,7 @@ Short notes on *why*, and what was traded away.
 ## Roadmap
 
 - [x] Phase 0: account safety, budgets, repo
-- [ ] Phase 1: static site on S3 + CloudFront (Terraform)
+- [x] Phase 1: static site on S3 + CloudFront with OAC (Terraform)
 - [ ] Phase 2: question engine + DynamoDB progress (Lambda)
 - [ ] Phase 3: optional sign-in (Cognito)
 - [ ] Phase 4: spaced repetition + daily reminder emails
