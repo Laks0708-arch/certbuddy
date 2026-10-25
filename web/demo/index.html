@@ -1,4 +1,4 @@
-<title>CertBuddy Demo</title>
+<title>CertBuddy</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Nunito+Sans:wght@400;600;700;800&family=JetBrains+Mono:wght@500&display=swap">
 <style>
 /* Layout: a working single-page demo of the study site. Top bar + page area + footer; a tour banner walks through every page. Progress is saved in this browser to show how saving works. */
@@ -107,7 +107,7 @@ footer{border-top:1px solid var(--line);background:var(--surface)}
 </div></header>
 <main id="page"></main>
 <footer><div class="footin">
-  <p><b>Demo.</b> Nothing leaves this browser: progress is saved only on this device so you can see how saving works.</p>
+  <p><b>Early preview.</b> Your progress is saved only on this device. Accounts and syncing are coming soon.</p>
   <p>CertBuddy is an independent study aid. Practice questions are original and are not taken from any real exam. Not affiliated with or endorsed by Amazon Web Services. AWS and related marks are trademarks of Amazon.com, Inc. or its affiliates. · <a href="#rules">Content rules & privacy</a></p>
 </div></footer>
 <div class="toast" id="toast" role="status"></div>
@@ -156,19 +156,19 @@ const DRILL=[
  {s:"Previews can be ___, are rarely opened, and must open instantly.",o:["re-created","the only copy"],a:0,ans:["S3 One Zone-IA","S3 Glacier Instant Retrieval / Standard-IA"]}
 ];
 const LESSONS=[
- {id:"l1",t:"How a Streaming App Runs on AWS",tag:"Streaming · 9 steps",u:"https://claude.ai/artifact/RKF9Sj2TcV9MKxRgd14YHL"},
- {id:"l2",t:"How a Multiplayer Game Travels",tag:"Networking · 7 steps",u:"https://claude.ai/artifact/J7Ry1DKpHmzfgFWhc7uh6W"},
- {id:"l3",t:"Where a Reading App Keeps Its Books",tag:"Storage · 10 steps",u:"https://claude.ai/artifact/DAFVdLskiSpCCW4zbk8FU8"},
- {id:"l4",t:"How a Food Delivery App Computes",tag:"Compute · 8 steps",u:"https://claude.ai/artifact/KStwRujKGKyzGQer58bS9w"},
- {id:"l5",t:"How a Banking App Stays Secure",tag:"Security · 10 steps",u:"https://claude.ai/artifact/5KupWH4mmjJuSfuqjd5Rtg"},
- {id:"l6",t:"How a Ticket Sale Routes Its Fans",tag:"Route 53 + load balancers · 11 steps · Polly voice",u:"https://claude.ai/artifact/VEhnYC9GpTtkAPrP4617Gc"}
+ {id:"l1",t:"How a Streaming App Runs on AWS",tag:"Streaming · 9 steps",u:"lessons/streaming.html"},
+ {id:"l2",t:"How a Multiplayer Game Travels",tag:"Networking · 7 steps",u:"lessons/game.html"},
+ {id:"l3",t:"Where a Reading App Keeps Its Books",tag:"Storage · 10 steps",u:"lessons/storage.html"},
+ {id:"l4",t:"How a Food Delivery App Computes",tag:"Compute · 8 steps",u:"lessons/compute.html"},
+ {id:"l5",t:"How a Banking App Stays Secure",tag:"Security · 10 steps",u:"lessons/security.html"},
+ {id:"l6",t:"How a Ticket Sale Routes Its Fans",tag:"Route 53 + load balancers · 11 steps · Polly voice",u:"lessons/routing.html"}
 ];
 const DOMS=[["Secure",30],["Resilient",26],["Performance",24],["Cost",20]];
 
 /* ---------- tour ---------- */
 const TOUR=[["home","This is what a visitor sees first. No sign-up needed."],["start","They pick an exam, a date and how long they can study each day."],["today","Their daily plan. Everything links from here."],["cards","Flashcards remember what they miss: tap a card, then Again or Got it."],["practice","Real-format questions with a pace timer, Select TWO and a policy exhibit."],["lessons","Narrated app-story lessons open from the library."],["progress","Scores by exam domain, built from their answers."],["account","Optional sign-in syncs progress; they can delete everything."],["how","How the pages link and how saving works behind the scenes."]];
 function renderTour(route){const i=TOUR.findIndex(t=>t[0]===route);const el=document.getElementById("tour");
-  if(i<0){el.innerHTML='<span>🧭 <b>Demo tour</b>: see every page in order</span><button type="button" data-tour="0">Start tour</button>';}
+  if(i<0){el.innerHTML='<span>🧭 <b>New here?</b> Take a quick tour of every page</span><button type="button" data-tour="0">Start tour</button>';}
   else el.innerHTML='<span>🧭 <b>Tour '+(i+1)+'/'+TOUR.length+'</b>: '+esc(TOUR[i][1])+'</span>'+(i>0?'<button type="button" class="ghost" data-tour="'+(i-1)+'">Back</button>':'')+(i<TOUR.length-1?'<button type="button" data-tour="'+(i+1)+'">Next page →</button>':'<button type="button" data-tour="0">Start again</button>');
   el.querySelectorAll("[data-tour]").forEach(b=>b.addEventListener("click",()=>{location.hash=TOUR[+b.dataset.tour][0]}))}
 
@@ -234,7 +234,7 @@ P.drill=()=>{if(!S.exam)return needStart();if(di>=DRILL.length){markDone("drill"
  const d=DRILL[di];return `<div class="row"><h1>Word-flip drill</h1><span class="muted">${di+1} / ${DRILL.length}</span></div>
  <div class="card"><p class="q">${esc(d.s)}</p><p class="muted">Which word makes the answer <b>${esc(d.ans[d.a])}</b>?</p><div class="grid2">${d.o.map((o,j)=>`<button class="opt" type="button" data-d="${j}">${esc(o)}</button>`).join("")}</div><div id="dfb"></div></div>`};
 P.lessons=()=>`
- <h1>Lessons</h1><p class="muted">Each lesson follows one real app, with a moving animation, subtitles and narration, then checks you with questions set in other apps. In the live site they play right here. In this demo they open in a new tab.</p>
+ <h1>Lessons</h1><p class="muted">Each lesson follows one real app, with a moving animation, subtitles and narration, then checks you with questions set in other apps. Each one opens in a new tab.</p>
  <div class="grid2">${LESSONS.map(l=>`<div class="card lesson"><span class="tag">${esc(l.tag)}</span><h3>${esc(l.t)}</h3><div class="chips"><a class="cta" href="${l.u}" target="_blank" rel="noopener" data-l="${l.id}">▶ Watch</a><button class="btn" type="button" data-w="${l.id}">${S.lessons[l.id]?"✓ Watched":"Mark as watched"}</button></div></div>`).join("")}</div>`;
 P.progress=()=>{if(!S.exam)return needStart();const by={};DOMS.forEach(([d])=>by[d]={r:0,n:0});S.answers.forEach(a=>{if(by[a.d]){by[a.d].n++;if(a.ok)by[a.d].r++}});
  const tot=S.answers.length,ok=S.answers.filter(a=>a.ok).length;const pct=tot?Math.round(ok/tot*100):0;
@@ -248,7 +248,7 @@ P.account=()=>`
  <h1>Account</h1>
  <div class="grid2">
   <div class="card"><h3>Sign in (optional)</h3>${S.signedIn?`<p>Signed in as <b>${esc(S.email)}</b></p><p class="muted">Your progress syncs to your account once at the end of each session, so it's on every device.</p><div class="chips"><button class="btn" type="button" id="sync">Sync now</button><button class="btn" type="button" id="out">Sign out</button></div>`
-  :`<p class="muted">You can use everything without an account. Signing in only saves progress across devices and turns on reminder emails.</p><label class="f" for="em">Email<input type="email" id="em" placeholder="you@example.com" autocomplete="email"></label><button class="cta" type="button" id="in">Send me a sign-in code (demo)</button><p class="muted" style="font-size:.85rem">Demo only: nothing is sent and no account is created.</p>`}</div>
+  :`<p class="muted">You can use everything without an account. Sign-in, which will save progress across devices and turn on reminder emails, is <b>coming soon</b>.</p><button class="btn" type="button" disabled>Sign-in coming soon</button>`}</div>
   <div class="card"><h3>Reminders</h3><label class="row" for="rem" style="justify-content:flex-start;gap:10px"><input type="checkbox" id="rem" ${S.reminders?"checked":""} ${S.signedIn?"":"disabled"}> Email me "your cards for today" each morning</label><p class="muted" style="font-size:.88rem">${S.signedIn?"One email a day, unsubscribe any time.":"Sign in first to turn on reminders."}</p></div>
  </div>
  <div class="card"><h3>Your data</h3><p class="muted">This is everything saved about you. You can copy it, or delete it all.</p><textarea readonly id="dump" aria-label="Your saved data">${esc(JSON.stringify(S,null,2))}</textarea>

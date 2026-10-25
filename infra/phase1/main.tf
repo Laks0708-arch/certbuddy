@@ -152,3 +152,23 @@ resource "aws_s3_object" "index" {
   content_type  = "text/html; charset=utf-8"
   cache_control = "max-age=300" # edges may keep a copy for 5 minutes
 }
+
+# ---------- The narrated lessons (built by web/lessons/tools/build.sh) ----------
+
+locals {
+  lessons_dir = "${path.module}/../../web/lessons/dist"
+  mime_types = {
+    html = "text/html; charset=utf-8"
+    mp3  = "audio/mpeg"
+  }
+}
+
+resource "aws_s3_object" "lessons" {
+  for_each      = fileset(local.lessons_dir, "**/*.{html,mp3}")
+  bucket        = aws_s3_bucket.site.id
+  key           = "lessons/${each.value}"
+  source        = "${local.lessons_dir}/${each.value}"
+  etag          = filemd5("${local.lessons_dir}/${each.value}")
+  content_type  = lookup(local.mime_types, reverse(split(".", each.value))[0], "application/octet-stream")
+  cache_control = endswith(each.value, ".mp3") ? "max-age=86400" : "max-age=300"
+}
