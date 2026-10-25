@@ -57,7 +57,8 @@ Short notes on *why*, and what was traded away.
 
 - [x] Phase 0: account safety, budgets, repo
 - [x] Phase 1: static site on S3 + CloudFront with OAC (Terraform)
-- [ ] Phase 2: question engine + DynamoDB progress (Lambda)
+- [x] Phase 2a: DynamoDB progress table + least-privilege Lambda (Terraform)
+- [ ] Phase 2b: connect the website to the API securely (CloudFront → Lambda with OAC)
 - [ ] Phase 3: optional sign-in (Cognito)
 - [ ] Phase 4: spaced repetition + daily reminder emails
 - [ ] Phase 5: narrated lessons on the live site (Polly). The lesson engine and 6 lessons are already built in `web/lessons`.

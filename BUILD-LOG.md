@@ -56,3 +56,26 @@ A short entry for every step: what I built, what I learned, and what it cost.
 - The Terraform AWS provider couldn't read the CLI's `aws login` session directly, so I exported temporary credentials first
 
 **Cost:** $0.00 (CloudFront's always-free 1 TB/month; a few MB in S3)
+
+## Phase 2a: back end for saving progress (25 Oct 2026)
+
+**Built** (Terraform, `infra/phase2/`)
+- DynamoDB table `certbuddy-progress`: partition key `learnerId`, provisioned 5/5 capacity (inside the always-free tier), TTL on `expiresAt`
+- Lambda `certbuddy-progress` (Python 3.13, arm64/Graviton, 128 MB): GET loads progress, PUT saves it, with input checks (UUID only, 20 KB limit)
+- IAM execution role allowing only `dynamodb:GetItem` + `dynamodb:PutItem` on that one table, plus writing its own logs
+- CloudWatch log group with 14-day retention
+
+**Tested**
+- Save: 200, with a cold start (init 469 ms). Load: 200 in 59 ms (warm). Bad ID: 400 in 2 ms
+- The item is visible in DynamoDB with its expiry date set a year ahead
+
+**Broke it on purpose**
+- Removed `dynamodb:PutItem` from the role by hand. Loading still worked, but saving failed with `AccessDeniedException ... is not authorized to perform: dynamodb:PutItem ... because no identity-based policy allows` it
+- `terraform plan` showed `+ "dynamodb:PutItem"`, and one apply restored it
+
+**Learned**
+- AWS errors say who (the role), what (the action) and where (the resource), which is enough to find the fix
+- Fix with the smallest change, never AdministratorAccess or `dynamodb:*`
+- No personal data: a random learner ID instead of a name or email, and TTL deletes inactive data after a year
+
+**Cost:** $0.00 (Lambda and DynamoDB always-free tiers)
