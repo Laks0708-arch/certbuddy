@@ -6,6 +6,7 @@ PUT  {"learnerId": "<uuid>", "progress": {}} -> saves the progress
 The learner ID is a random UUID made in the learner's browser, so no personal
 data (name, email) is stored. Items expire after a year of no activity.
 """
+import base64
 import json
 import os
 import re
@@ -37,6 +38,8 @@ def handler(event, context):
 
     if method in ("PUT", "POST"):
         raw = event.get("body") or ""
+        if event.get("isBase64Encoded"):
+            raw = base64.b64decode(raw).decode("utf-8", "replace")
         if len(raw.encode()) > MAX_BYTES:
             return reply(413, {"error": "progress too large"})
         try:

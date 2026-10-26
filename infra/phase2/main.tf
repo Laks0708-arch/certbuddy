@@ -117,6 +117,17 @@ resource "aws_lambda_function" "progress" {
   depends_on = [aws_cloudwatch_log_group.progress, aws_iam_role_policy.progress]
 }
 
+# The function's own web address. AWS_IAM means only signed requests are accepted:
+# in practice, only our CloudFront distribution (via OAC) can call it.
+resource "aws_lambda_function_url" "progress" {
+  function_name      = aws_lambda_function.progress.function_name
+  authorization_type = "AWS_IAM"
+}
+
+output "function_url_domain" {
+  value = trimsuffix(trimprefix(aws_lambda_function_url.progress.function_url, "https://"), "/")
+}
+
 output "function_name" {
   value = aws_lambda_function.progress.function_name
 }

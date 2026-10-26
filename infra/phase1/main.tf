@@ -75,6 +75,33 @@ resource "aws_cloudfront_origin_access_control" "site" {
   signing_protocol                  = "sigv4"
 }
 
+# ---------- Phase 2b: the progress API (Lambda) behind the same front door ----------
+
+# Read the Lambda details from the Phase 2 Terraform state.
+data "terraform_remote_state" "backend" {
+  backend = "local"
+  config = {
+    path = "${path.module}/../phase2/terraform.tfstate"
+  }
+}
+
+# A second ID badge, this time for calling Lambda.
+resource "aws_cloudfront_origin_access_control" "api" {
+  name                              = "certbuddy-api-oac-${random_id.suffix.hex}"
+  origin_access_control_origin_type = "lambda"
+  signing_behavior                  = "always"
+  signing_protocol                  = "sigv4"
+}
+
+# Never cache personal data; forward the query string and body to Lambda.
+data "aws_cloudfront_cache_policy" "disabled" {
+  name = "Managed-CachingDisabled"
+}
+
+data "aws_cloudfront_origin_request_policy" "all_except_host" {
+  name = "Managed-AllViewerExceptHostHeader"
+}
+
 # ---------- The "high-street shops": CloudFront ----------
 
 # AWS's ready-made caching policy for static files.
@@ -93,6 +120,30 @@ resource "aws_cloudfront_distribution" "site" {
     domain_name              = aws_s3_bucket.site.bucket_regional_domain_name
     origin_id                = "s3-site"
     origin_access_control_id = aws_cloudfront_origin_access_control.site.id
+  }
+
+  origin {
+    domain_name              = data.terraform_remote_state.backend.outputs.function_url_domain
+    origin_id                = "lambda-api"
+    origin_access_control_id = aws_cloudfront_origin_access_control.api.id
+    custom_origin_config {
+      http_port              = 80
+      https_port             = 443
+      origin_protocol_policy = "https-only"
+      origin_ssl_protocols   = ["TLSv1.2"]
+    }
+  }
+
+  # Requests starting with /api/ go to Lambda; everything else goes to S3.
+  ordered_cache_behavior {
+    path_pattern             = "/api/*"
+    target_origin_id         = "lambda-api"
+    viewer_protocol_policy   = "https-only"
+    allowed_methods          = ["GET", "HEAD", "OPTIONS", "PUT", "POST", "PATCH", "DELETE"]
+    cached_methods           = ["GET", "HEAD"]
+    cache_policy_id          = data.aws_cloudfront_cache_policy.disabled.id
+    origin_request_policy_id = data.aws_cloudfront_origin_request_policy.all_except_host.id
+    compress                 = true
   }
 
   default_cache_behavior {
@@ -140,6 +191,25 @@ resource "aws_s3_bucket_policy" "site" {
   bucket     = aws_s3_bucket.site.id
   policy     = data.aws_iam_policy_document.site.json
   depends_on = [aws_s3_bucket_public_access_block.site]
+}
+
+# ---------- Let ONLY this distribution call the Lambda function URL ----------
+
+resource "aws_lambda_permission" "cloudfront_url" {
+  statement_id           = "AllowCloudFrontInvokeFunctionUrl"
+  action                 = "lambda:InvokeFunctionUrl"
+  function_name          = data.terraform_remote_state.backend.outputs.function_name
+  principal              = "cloudfront.amazonaws.com"
+  source_arn             = aws_cloudfront_distribution.site.arn
+  function_url_auth_type = "AWS_IAM"
+}
+
+resource "aws_lambda_permission" "cloudfront_invoke" {
+  statement_id  = "AllowCloudFrontInvokeFunction"
+  action        = "lambda:InvokeFunction"
+  function_name = data.terraform_remote_state.backend.outputs.function_name
+  principal     = "cloudfront.amazonaws.com"
+  source_arn    = aws_cloudfront_distribution.site.arn
 }
 
 # ---------- The page itself ----------
