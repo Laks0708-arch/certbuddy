@@ -79,3 +79,25 @@ A short entry for every step: what I built, what I learned, and what it cost.
 - No personal data: a random learner ID instead of a name or email, and TTL deletes inactive data after a year
 
 **Cost:** $0.00 (Lambda and DynamoDB always-free tiers)
+
+## Phase 2b: the website talks to the back end (26 Oct 2026)
+
+**Built**
+- Lambda function URL with `AWS_IAM` auth, so only signed requests are accepted
+- A second CloudFront origin for the function URL, protected by an origin access control of type `lambda`
+- CloudFront behaviour `/api/*` → Lambda with caching disabled (personal data is never cached); everything else → S3
+- Resource-based permissions so only this distribution can invoke the function (`lambda:InvokeFunctionUrl` + `lambda:InvokeFunction`)
+- "Cloud backup (beta)" on the Account page: back up with a random backup code and restore on another device. The browser sends an `x-amz-content-sha256` header, which OAC needs to sign PUT bodies
+
+**Tested**
+- Calling the function URL directly: `403 Forbidden`
+- Through the site: back up `200`, restore `200` (always `x-cache: Miss`), unknown code `404`
+- Real test: backed up on a laptop and restored on a phone
+
+**Learned**
+- One web address for pages and API avoids CORS; OAC keeps the API locked to CloudFront
+- Never cache personal API responses
+- A function URL is enough for a small app; API Gateway adds throttling, API keys and usage plans
+- Stack order matters: the back-end stack must exist before the front-door stack reads its outputs
+
+**Cost:** $0.00
