@@ -141,3 +141,14 @@ Suggested in a LinkedIn comment by a senior engineer. Attached the AWS managed `
 - A first "tampering" test passed when it shouldn't have. Investigation showed the test itself was flawed: changing the last base64 character of a 256-byte signature doesn't change its bytes.
 - Re-tested by changing the middle of the signature and the payload: both 401, with logs showing `ValueError: bad signature` from the new code.
 - Smoke tests: 20/20.
+
+## Debugging drill: I found and fixed it myself (27 Oct 2026)
+
+*A practice fault was injected on purpose, without telling me what it was. Everything below I did myself.*
+
+- **Symptom:** on the website, Sync failed.
+- **How I found it:** I ran `aws logs tail /aws/lambda/certbuddy-progress --since 10m`. The error said `AccessDeniedException … dynamodb:PutItem on resource …table/certbuddy-progres`.
+- **Root cause:** a misspelling. Reading the resource name letter by letter, the table name was missing an "s". `aws lambda get-function-configuration` showed the Lambda's `TABLE_NAME` setting was `certbuddy-progres`. The error said AccessDenied because the role is only allowed on the correctly named table.
+- **Fix:** I ran `terraform plan`, which showed `~ "TABLE_NAME" = "certbuddy-progres" -> "certbuddy-progress"` (0 to destroy), then `terraform apply` to change the spelling back to what it should be.
+- **Proof:** I ran the smoke tests (20/20 passed) and checked on the website myself: Sync now worked.
+- **What I learned:** read every word of an error, including spelling. An error can name the effect (AccessDenied) rather than the cause (a wrong name). Fix with code, not by hand, then verify.
