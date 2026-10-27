@@ -231,6 +231,16 @@ resource "aws_s3_object" "index" {
   cache_control = "max-age=300" # edges may keep a copy for 5 minutes
 }
 
+# ---------- Sign-in settings for the website (from the Phase 2 stack) ----------
+
+resource "aws_s3_object" "config" {
+  bucket        = aws_s3_bucket.site.id
+  key           = "config.js"
+  content       = "window.CB_AUTH=${jsonencode({ domain = data.terraform_remote_state.backend.outputs.auth_domain, clientId = data.terraform_remote_state.backend.outputs.auth_client_id, redirect = "https://${aws_cloudfront_distribution.site.domain_name}/" })};"
+  content_type  = "application/javascript; charset=utf-8"
+  cache_control = "max-age=300"
+}
+
 # ---------- The narrated lessons (built by web/lessons/tools/build.sh) ----------
 
 locals {

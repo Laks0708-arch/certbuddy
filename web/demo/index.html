@@ -1,4 +1,5 @@
 <title>CertBuddy</title>
+<script src="config.js"></script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Nunito+Sans:wght@400;600;700;800&family=JetBrains+Mono:wght@500&display=swap">
 <style>
 /* Layout: a working single-page demo of the study site. Top bar + page area + footer; a tour banner walks through every page. Progress is saved in this browser to show how saving works. */
@@ -118,7 +119,7 @@ const KEY="certbuddy-demo-v1";
 const fresh=()=>({exam:"",examDate:"",minutes:15,checked:false,streak:0,lastDay:"",cards:{},answers:[],done:{},lessons:{},signedIn:false,email:"",learnerId:"",backedUp:null,reminders:false,saved:null,synced:null});
 let S;try{S=Object.assign(fresh(),JSON.parse(localStorage.getItem(KEY)||"{}"))}catch(e){S=fresh()}
 const today=()=>new Date().toISOString().slice(0,10);
-function save(msg){S.saved=new Date().toISOString();try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}renderSave();if(msg)toast(msg)}
+function save(msg){S.saved=new Date().toISOString();try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}renderSave();if(msg)toast(msg);if(typeof AUTH!=="undefined"&&S.signedIn)AUTH.save()}
 function renderSave(){const el=document.getElementById("save");const t=S.saved?new Date(S.saved).toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"}):"";
   el.textContent=S.signedIn?(S.synced?"☁ Synced "+new Date(S.synced).toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"}):"☁ Will sync at end of session"):(S.saved?"✓ Saved on this device "+t:"Not saved yet")}
 function toast(m){const t=document.getElementById("toast");t.textContent=m;t.classList.add("on");clearTimeout(toast.h);toast.h=setTimeout(()=>t.classList.remove("on"),1800)}
@@ -247,9 +248,9 @@ P.progress=()=>{if(!S.exam)return needStart();const by={};DOMS.forEach(([d])=>by
 P.account=()=>`
  <h1>Account</h1>
  <div class="grid2">
-  <div class="card"><h3>Sign in (optional)</h3>${S.signedIn?`<p>Signed in as <b>${esc(S.email)}</b></p><p class="muted">Your progress syncs to your account once at the end of each session, so it's on every device.</p><div class="chips"><button class="btn" type="button" id="sync">Sync now</button><button class="btn" type="button" id="out">Sign out</button></div>`
-  :`<p class="muted">You can use everything without an account. Sign-in, which will save progress across devices and turn on reminder emails, is <b>coming soon</b>.</p><button class="btn" type="button" disabled>Sign-in coming soon</button>`}</div>
-  <div class="card"><h3>Reminders</h3><label class="row" for="rem" style="justify-content:flex-start;gap:10px"><input type="checkbox" id="rem" ${S.reminders?"checked":""} ${S.signedIn?"":"disabled"}> Email me "your cards for today" each morning</label><p class="muted" style="font-size:.88rem">${S.signedIn?"One email a day, unsubscribe any time.":"Sign in first to turn on reminders."}</p></div>
+  <div class="card"><h3>Sign in (optional)</h3>${S.signedIn?`<p>Signed in as <b>${esc(S.email)}</b></p><p class="muted">Your progress saves to your account automatically, so it's on every device where you sign in.</p><div class="chips"><button class="btn" type="button" id="sync">Sync now</button><button class="btn" type="button" id="out">Sign out</button></div>`
+  :`<p class="muted">You can use everything without an account. Signing in saves your progress to your account so it follows you to any device. We store your email (for sign-in) and your study progress, nothing else.</p><button class="cta" type="button" id="signin">Sign in or create account</button>`}</div>
+  <div class="card"><h3>Reminders</h3><label class="row" for="rem" style="justify-content:flex-start;gap:10px"><input type="checkbox" id="rem" disabled> Email me "your cards for today" each morning</label><p class="muted" style="font-size:.88rem">Daily reminder emails are coming soon.</p></div>
  </div>
 <div class="card"><h3>☁️ Cloud backup (beta)</h3><p class="muted">Save your progress online so you can carry on on another device. It's stored with a random backup code, never your name or email. Anyone with the code can see the progress, so keep it private.</p>
   ${S.learnerId?`<p>Your backup code: <code id="bcode" style="font:600 .85rem var(--mono);word-break:break-all">${esc(S.learnerId)}</code></p>`:""}
@@ -296,7 +297,7 @@ P.rules=()=>`
  <div class="card"><h3>Your privacy (UK GDPR)</h3><ul style="margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:6px">
   <li>No adverts and no tracking cookies.</li>
   <li>Without an account, everything stays in your browser.</li>
-  <li>With an account we store only your email and your study progress.</li>
+  <li>If you create an account, Amazon Cognito stores your email and password securely (we never see your password), and we store only your study progress.</li>
   <li>We never sell or share your data.</li>
   <li>Cloud backup (optional) stores your study progress under a random code, with no name or email, and deletes it automatically after a year without activity.</li><li>Delete everything at any time from <a href="#account">Account</a>.</li></ul></div></div>`;
 function needStart(){return `<div class="card"><h2>Let's set up your plan first</h2><p class="muted">It takes 20 seconds and is saved on this device.</p><a class="cta" href="#start">Set up my plan</a></div>`}
@@ -346,13 +347,50 @@ function bind(k){const $=s=>document.getElementById(s);
    try{const r=await fetch(api+"?learnerId="+encodeURIComponent(code));if(r.status===404){toast("No backup found for that code");return}if(!r.ok)throw new Error("HTTP "+r.status);
     const d=await r.json();Object.assign(S,d.progress||{});S.learnerId=code;S.backedUp=new Date((d.updatedAt||0)*1000).toISOString();save("Progress restored");route()}
    catch(e){toast("Restore failed ("+e.message+")")}});$("in")&&$("in").addEventListener("click",()=>{const v=$("em").value.trim();if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v)){toast("Enter an email address like you@example.com");return}S.signedIn=true;S.email=v;S.synced=new Date().toISOString();save("Signed in (demo). Progress synced");route()});
-  $("out")&&$("out").addEventListener("click",()=>{S.signedIn=false;S.reminders=false;S.synced=null;save("Signed out. Progress stays on this device");route()});
-  $("sync")&&$("sync").addEventListener("click",()=>{S.synced=new Date().toISOString();save("Synced to your account (demo)");route()});
+  $("signin")&&$("signin").addEventListener("click",()=>AUTH.start());
+  $("out")&&$("out").addEventListener("click",()=>AUTH.signOut());
+  $("sync")&&$("sync").addEventListener("click",()=>AUTH.save(true));
   $("rem")&&$("rem").addEventListener("change",e=>{S.reminders=e.target.checked;save(S.reminders?"Morning reminders on":"Reminders off")});
   $("copy").addEventListener("click",()=>{const t=$("dump");try{navigator.clipboard.writeText(t.value).then(()=>toast("Copied"),()=>{t.select();toast("Selected: press Copy")})}catch(e){t.select();toast("Selected: press Copy")}});
   $("del").addEventListener("click",()=>{$("delc").innerHTML='<div class="fb"><b class="no">Delete all progress, settings and sign-in on this device?</b><div class="chips"><button class="btn bad" type="button" id="dy">Yes, delete everything</button><button class="btn" type="button" id="dn2">Cancel</button></div></div>';
    $("dy").addEventListener("click",()=>{S=fresh();try{localStorage.removeItem(KEY)}catch(e){}fq=[];pq=0;pSel=[];pRes={};di=0;dRes=[];renderSave();toast("Everything deleted");location.hash="home"});$("dn2").addEventListener("click",()=>{$("delc").innerHTML=""})})}
 }
-window.addEventListener("hashchange",route);renderSave();route();
+/* ---------- sign-in with Amazon Cognito (authorization code + PKCE) ---------- */
+const AUTH=(()=>{const C=window.CB_AUTH||null;const TK="cb-tokens";
+  const b64u=b=>btoa(String.fromCharCode(...new Uint8Array(b))).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"");
+  const rnd=n=>b64u(crypto.getRandomValues(new Uint8Array(n)));
+  const shaHex=async t=>[...new Uint8Array(await crypto.subtle.digest("SHA-256",new TextEncoder().encode(t)))].map(x=>x.toString(16).padStart(2,"0")).join("");
+  const claims=t=>{try{return JSON.parse(atob(t.split(".")[1].replace(/-/g,"+").replace(/_/g,"/")))}catch(e){return{}}};
+  const get=()=>{try{const t=JSON.parse(sessionStorage.getItem(TK)||"null");return t&&t.exp>Date.now()+30000?t:null}catch(e){return null}};
+  const pack=()=>({exam:S.exam,examDate:S.examDate,minutes:S.minutes,checked:S.checked,streak:S.streak,lastDay:S.lastDay,cards:S.cards,answers:S.answers.slice(-200),done:S.done,lessons:S.lessons});
+  async function start(){if(!C){toast("Sign-in isn't available here");return}
+    const verifier=rnd(48),state=rnd(16);try{sessionStorage.setItem("cb-pkce",JSON.stringify({verifier,state}))}catch(e){}
+    const challenge=b64u(await crypto.subtle.digest("SHA-256",new TextEncoder().encode(verifier)));
+    const q=new URLSearchParams({response_type:"code",client_id:C.clientId,redirect_uri:C.redirect,scope:"openid email",state,code_challenge:challenge,code_challenge_method:"S256"});
+    location.assign(C.domain+"/oauth2/authorize?"+q)}
+  async function finish(){const u=new URL(location.href);const code=u.searchParams.get("code");if(!code||!C)return false;
+    let saved={};try{saved=JSON.parse(sessionStorage.getItem("cb-pkce")||"{}")}catch(e){}
+    history.replaceState(null,"","/#account");
+    if(!saved.verifier||saved.state!==u.searchParams.get("state")){toast("Sign-in expired. Please try again");return true}
+    const r=await fetch(C.domain+"/oauth2/token",{method:"POST",headers:{"Content-Type":"application/x-www-form-urlencoded"},body:new URLSearchParams({grant_type:"authorization_code",client_id:C.clientId,code,redirect_uri:C.redirect,code_verifier:saved.verifier})});
+    if(!r.ok){toast("Sign-in failed ("+r.status+")");return true}
+    const t=await r.json();const tok={access:t.access_token,id:t.id_token,exp:Date.now()+t.expires_in*1000};
+    try{sessionStorage.setItem(TK,JSON.stringify(tok));sessionStorage.removeItem("cb-pkce")}catch(e){}
+    S.signedIn=true;S.email=claims(tok.id).email||"";save("Signed in as "+S.email);await load();return true}
+  async function api(method,body){const t=get();if(!t){S.signedIn=false;save();throw new Error("signed out")}
+    const h={"x-cb-token":t.access};let opts={method,headers:h};
+    if(body!==undefined){opts.body=JSON.stringify(body);h["Content-Type"]="application/json";h["x-amz-content-sha256"]=await shaHex(opts.body)}
+    return fetch("/api/progress",opts)}
+  async function load(){try{const r=await api("GET");if(r.status===404){await push(true);return}if(!r.ok)throw new Error("HTTP "+r.status);
+      const d=await r.json();Object.assign(S,d.progress||{});S.synced=new Date().toISOString();save("Progress loaded from your account");route()}catch(e){toast("Couldn't load your account progress")}}
+  let timer=null;
+  async function push(now){if(!get())return;clearTimeout(timer);const run=async()=>{try{const r=await api("PUT",{progress:pack()});if(!r.ok)throw new Error("HTTP "+r.status);
+      S.synced=new Date().toISOString();try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}renderSave();if(now===true)toast("Synced to your account")}catch(e){if(now===true)toast("Sync failed. Your progress is safe on this device")}};
+    if(now===true)return run();timer=setTimeout(run,8000)}
+  function signOut(){try{sessionStorage.removeItem(TK)}catch(e){}S.signedIn=false;S.email="";S.synced=null;try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}
+    if(C)location.assign(C.domain+"/logout?"+new URLSearchParams({client_id:C.clientId,logout_uri:C.redirect}));else route()}
+  if(S.signedIn&&!get()){S.signedIn=false}
+  return{start,finish,save:push,signOut,signedIn:()=>!!get()}})();
+window.addEventListener("hashchange",route);renderSave();route();AUTH.finish();
 })();
 </script>
