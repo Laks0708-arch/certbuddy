@@ -114,3 +114,7 @@ A short entry for every step: what I built, what I learned, and what it cost.
 **Why:** UK GDPR right to erasure. Learners can remove their data any time instead of waiting for the one-year TTL.
 
 **Cost:** $0.00
+
+## Security headers (27 Oct 2026)
+
+Suggested in a LinkedIn comment by a senior engineer. Attached the AWS managed `SecurityHeadersPolicy` to both cache behaviours, so every response now carries `Strict-Transport-Security` (HSTS), `X-Content-Type-Options: nosniff`, `X-Frame-Options`, `Referrer-Policy` and `X-XSS-Protection`. Before: none. One Terraform line per behaviour; cost $0.

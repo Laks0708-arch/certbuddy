@@ -105,6 +105,12 @@ data "aws_cloudfront_origin_request_policy" "all_except_host" {
 # ---------- The "high-street shops": CloudFront ----------
 
 # AWS's ready-made caching policy for static files.
+# AWS's ready-made security headers: HSTS, X-Content-Type-Options, X-Frame-Options,
+# Referrer-Policy and X-XSS-Protection, added to every response.
+data "aws_cloudfront_response_headers_policy" "security" {
+  name = "Managed-SecurityHeadersPolicy"
+}
+
 data "aws_cloudfront_cache_policy" "optimized" {
   name = "Managed-CachingOptimized"
 }
@@ -136,23 +142,25 @@ resource "aws_cloudfront_distribution" "site" {
 
   # Requests starting with /api/ go to Lambda; everything else goes to S3.
   ordered_cache_behavior {
-    path_pattern             = "/api/*"
-    target_origin_id         = "lambda-api"
-    viewer_protocol_policy   = "https-only"
-    allowed_methods          = ["GET", "HEAD", "OPTIONS", "PUT", "POST", "PATCH", "DELETE"]
-    cached_methods           = ["GET", "HEAD"]
-    cache_policy_id          = data.aws_cloudfront_cache_policy.disabled.id
-    origin_request_policy_id = data.aws_cloudfront_origin_request_policy.all_except_host.id
-    compress                 = true
+    path_pattern               = "/api/*"
+    target_origin_id           = "lambda-api"
+    viewer_protocol_policy     = "https-only"
+    allowed_methods            = ["GET", "HEAD", "OPTIONS", "PUT", "POST", "PATCH", "DELETE"]
+    cached_methods             = ["GET", "HEAD"]
+    cache_policy_id            = data.aws_cloudfront_cache_policy.disabled.id
+    origin_request_policy_id   = data.aws_cloudfront_origin_request_policy.all_except_host.id
+    response_headers_policy_id = data.aws_cloudfront_response_headers_policy.security.id
+    compress                   = true
   }
 
   default_cache_behavior {
-    target_origin_id       = "s3-site"
-    viewer_protocol_policy = "redirect-to-https" # anyone using http:// is sent to https://
-    allowed_methods        = ["GET", "HEAD"]
-    cached_methods         = ["GET", "HEAD"]
-    cache_policy_id        = data.aws_cloudfront_cache_policy.optimized.id
-    compress               = true
+    target_origin_id           = "s3-site"
+    viewer_protocol_policy     = "redirect-to-https" # anyone using http:// is sent to https://
+    allowed_methods            = ["GET", "HEAD"]
+    cached_methods             = ["GET", "HEAD"]
+    cache_policy_id            = data.aws_cloudfront_cache_policy.optimized.id
+    response_headers_policy_id = data.aws_cloudfront_response_headers_policy.security.id
+    compress                   = true
   }
 
   restrictions {
