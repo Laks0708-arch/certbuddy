@@ -252,13 +252,13 @@ P.account=()=>`
   :`<p class="muted">You can use everything without an account. Signing in saves your progress to your account so it follows you to any device. We store your email (for sign-in) and your study progress, nothing else.</p><button class="cta" type="button" id="signin">Sign in or create account</button>`}</div>
   <div class="card"><h3>Reminders</h3><label class="row" for="rem" style="justify-content:flex-start;gap:10px"><input type="checkbox" id="rem" disabled> Email me "your cards for today" each morning</label><p class="muted" style="font-size:.88rem">Daily reminder emails are coming soon.</p></div>
  </div>
-<div class="card"><h3>☁️ Cloud backup (beta)</h3><p class="muted">Save your progress online so you can carry on on another device. It's stored with a random backup code, never your name or email. Anyone with the code can see the progress, so keep it private.</p>
+${S.signedIn?'<div class="card"><h3>☁️ Cloud backup</h3><p class="muted">You\'re signed in, so your progress is backed up to your account automatically. Backup codes are only for people without an account.</p></div>':`<div class="card"><h3>☁️ Cloud backup (beta)</h3><p class="muted">Save your progress online so you can carry on on another device. It's stored with a random backup code, never your name or email. Anyone with the code can see the progress, so keep it private.</p>
   ${S.learnerId?`<p>Your backup code: <code id="bcode" style="font:600 .85rem var(--mono);word-break:break-all">${esc(S.learnerId)}</code></p>`:""}
   <div class="chips"><button class="cta" type="button" id="bk">Back up now</button>${S.learnerId?'<button class="btn" type="button" id="bcopy">Copy code</button>':""}</div>
   <p class="muted" style="font-size:.88rem" id="bkmsg">${S.backedUp?"Last backed up "+new Date(S.backedUp).toLocaleString():"Not backed up yet."}</p>
   <label class="f" for="rcode">Restore on this device: paste a backup code<input type="text" id="rcode" placeholder="e.g. 3f1c…" autocomplete="off"></label>
   <button class="btn" type="button" id="rs">Restore progress</button>
-  ${S.learnerId?'<button class="btn bad" type="button" id="bdel">Delete my cloud backup</button><div id="bdelc"></div>':""}</div>
+  ${S.learnerId?'<button class="btn bad" type="button" id="bdel">Delete my cloud backup</button><div id="bdelc"></div>':""}</div>`}
   <div class="card"><h3>Your data</h3><p class="muted">This is everything saved about you. You can copy it, or delete it all.</p><textarea readonly id="dump" aria-label="Your saved data">${esc(JSON.stringify(S,null,2))}</textarea>
   <div class="chips"><button class="btn" type="button" id="copy">Copy my data</button><button class="btn bad" type="button" id="del">Delete everything</button></div><div id="delc"></div></div>`;
 P.how=()=>`
@@ -333,7 +333,7 @@ function bind(k){const $=s=>document.getElementById(s);
   const api="/api/progress";
   const sha=async t=>[...new Uint8Array(await crypto.subtle.digest("SHA-256",new TextEncoder().encode(t)))].map(b=>b.toString(16).padStart(2,"0")).join("");
   const pack=()=>({exam:S.exam,examDate:S.examDate,minutes:S.minutes,checked:S.checked,streak:S.streak,lastDay:S.lastDay,cards:S.cards,answers:S.answers.slice(-200),done:S.done,lessons:S.lessons});
-  $("bk").addEventListener("click",async()=>{const m=$("bkmsg");m.textContent="Backing up…";
+  $("bk")&&$("bk").addEventListener("click",async()=>{const m=$("bkmsg");m.textContent="Backing up…";
    try{if(!S.learnerId)S.learnerId=crypto.randomUUID();const body=JSON.stringify({learnerId:S.learnerId,progress:pack()});
     const r=await fetch(api,{method:"PUT",headers:{"Content-Type":"application/json","x-amz-content-sha256":await sha(body)},body});
     if(!r.ok)throw new Error("HTTP "+r.status);S.backedUp=new Date().toISOString();save("Backed up to the cloud");route()}
@@ -343,7 +343,7 @@ function bind(k){const $=s=>document.getElementById(s);
    $("bdn").addEventListener("click",()=>{$("bdelc").innerHTML=""});
    $("bdy").addEventListener("click",async()=>{try{const r=await fetch(api+"?learnerId="+encodeURIComponent(S.learnerId),{method:"DELETE"});if(!r.ok)throw new Error("HTTP "+r.status);
      S.learnerId="";S.backedUp=null;save("Cloud backup deleted");route()}catch(e){toast("Delete failed ("+e.message+")")}})});
-  $("rs").addEventListener("click",async()=>{const code=$("rcode").value.trim().toLowerCase();if(!/^[0-9a-f-]{36}$/.test(code)){toast("That doesn't look like a backup code");return}
+  $("rs")&&$("rs").addEventListener("click",async()=>{const code=$("rcode").value.trim().toLowerCase();if(!/^[0-9a-f-]{36}$/.test(code)){toast("That doesn't look like a backup code");return}
    try{const r=await fetch(api+"?learnerId="+encodeURIComponent(code));if(r.status===404){toast("No backup found for that code");return}if(!r.ok)throw new Error("HTTP "+r.status);
     const d=await r.json();Object.assign(S,d.progress||{});S.learnerId=code;S.backedUp=new Date((d.updatedAt||0)*1000).toISOString();save("Progress restored");route()}
    catch(e){toast("Restore failed ("+e.message+")")}});$("in")&&$("in").addEventListener("click",()=>{const v=$("em").value.trim();if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v)){toast("Enter an email address like you@example.com");return}S.signedIn=true;S.email=v;S.synced=new Date().toISOString();save("Signed in (demo). Progress synced");route()});
@@ -366,7 +366,7 @@ const AUTH=(()=>{const C=window.CB_AUTH||null;const TK="cb-tokens";
   async function start(){if(!C){toast("Sign-in isn't available here");return}
     const verifier=rnd(48),state=rnd(16);try{sessionStorage.setItem("cb-pkce",JSON.stringify({verifier,state}))}catch(e){}
     const challenge=b64u(await crypto.subtle.digest("SHA-256",new TextEncoder().encode(verifier)));
-    const q=new URLSearchParams({response_type:"code",client_id:C.clientId,redirect_uri:C.redirect,scope:"openid email",state,code_challenge:challenge,code_challenge_method:"S256"});
+    const q=new URLSearchParams({response_type:"code",client_id:C.clientId,redirect_uri:C.redirect,scope:"openid email aws.cognito.signin.user.admin",state,code_challenge:challenge,code_challenge_method:"S256"});
     location.assign(C.domain+"/oauth2/authorize?"+q)}
   async function finish(){const u=new URL(location.href);const code=u.searchParams.get("code");if(!code||!C)return false;
     let saved={};try{saved=JSON.parse(sessionStorage.getItem("cb-pkce")||"{}")}catch(e){}

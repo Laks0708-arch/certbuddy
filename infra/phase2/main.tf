@@ -184,7 +184,7 @@ resource "aws_cognito_user_pool_client" "web" {
   generate_secret                      = false
   allowed_oauth_flows_user_pool_client = true
   allowed_oauth_flows                  = ["code"]
-  allowed_oauth_scopes                 = ["openid", "email"]
+  allowed_oauth_scopes                 = ["openid", "email", "aws.cognito.signin.user.admin"] # the last one lets Lambda call GetUser with the token
   supported_identity_providers         = ["COGNITO"]
   callback_urls                        = ["https://${var.site_domain}/"]
   logout_urls                          = ["https://${var.site_domain}/"]

@@ -47,8 +47,10 @@ def signed_in_key(event):
         COGNITO.get_user(AccessToken=token)          # Cognito checks the signature and expiry
         claims = claims_of(token)
     except Exception as exc:
+        print(f"token check failed: {type(exc).__name__}: {exc}")   # visible in CloudWatch Logs
         raise PermissionError("invalid or expired sign-in") from exc
     if claims.get("token_use") != "access" or claims.get("client_id") != CLIENT_ID:
+        print("token rejected: wrong token_use or client_id")
         raise PermissionError("token is not for this app")
     return "u#" + claims["sub"]
 
