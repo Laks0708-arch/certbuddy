@@ -256,7 +256,8 @@ P.account=()=>`
   <div class="chips"><button class="cta" type="button" id="bk">Back up now</button>${S.learnerId?'<button class="btn" type="button" id="bcopy">Copy code</button>':""}</div>
   <p class="muted" style="font-size:.88rem" id="bkmsg">${S.backedUp?"Last backed up "+new Date(S.backedUp).toLocaleString():"Not backed up yet."}</p>
   <label class="f" for="rcode">Restore on this device: paste a backup code<input type="text" id="rcode" placeholder="e.g. 3f1c…" autocomplete="off"></label>
-  <button class="btn" type="button" id="rs">Restore progress</button></div>
+  <button class="btn" type="button" id="rs">Restore progress</button>
+  ${S.learnerId?'<button class="btn bad" type="button" id="bdel">Delete my cloud backup</button><div id="bdelc"></div>':""}</div>
   <div class="card"><h3>Your data</h3><p class="muted">This is everything saved about you. You can copy it, or delete it all.</p><textarea readonly id="dump" aria-label="Your saved data">${esc(JSON.stringify(S,null,2))}</textarea>
   <div class="chips"><button class="btn" type="button" id="copy">Copy my data</button><button class="btn bad" type="button" id="del">Delete everything</button></div><div id="delc"></div></div>`;
 P.how=()=>`
@@ -337,6 +338,10 @@ function bind(k){const $=s=>document.getElementById(s);
     if(!r.ok)throw new Error("HTTP "+r.status);S.backedUp=new Date().toISOString();save("Backed up to the cloud");route()}
    catch(e){m.textContent="Backup failed ("+e.message+"). Your progress is still safe on this device."}});
   $("bcopy")&&$("bcopy").addEventListener("click",()=>{try{navigator.clipboard.writeText(S.learnerId).then(()=>toast("Code copied"),()=>toast("Select the code and copy it"))}catch(e){toast("Select the code and copy it")}});
+  $("bdel")&&$("bdel").addEventListener("click",()=>{$("bdelc").innerHTML='<div class="fb"><b class="no">Delete your cloud backup? Your progress stays on this device.</b><div class="chips"><button class="btn bad" type="button" id="bdy">Yes, delete it</button><button class="btn" type="button" id="bdn">Cancel</button></div></div>';
+   $("bdn").addEventListener("click",()=>{$("bdelc").innerHTML=""});
+   $("bdy").addEventListener("click",async()=>{try{const r=await fetch(api+"?learnerId="+encodeURIComponent(S.learnerId),{method:"DELETE"});if(!r.ok)throw new Error("HTTP "+r.status);
+     S.learnerId="";S.backedUp=null;save("Cloud backup deleted");route()}catch(e){toast("Delete failed ("+e.message+")")}})});
   $("rs").addEventListener("click",async()=>{const code=$("rcode").value.trim().toLowerCase();if(!/^[0-9a-f-]{36}$/.test(code)){toast("That doesn't look like a backup code");return}
    try{const r=await fetch(api+"?learnerId="+encodeURIComponent(code));if(r.status===404){toast("No backup found for that code");return}if(!r.ok)throw new Error("HTTP "+r.status);
     const d=await r.json();Object.assign(S,d.progress||{});S.learnerId=code;S.backedUp=new Date((d.updatedAt||0)*1000).toISOString();save("Progress restored");route()}

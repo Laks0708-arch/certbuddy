@@ -2,6 +2,7 @@
 
 GET  ?learnerId=<uuid>                      -> returns the saved progress
 PUT  {"learnerId": "<uuid>", "progress": {}} -> saves the progress
+DELETE ?learnerId=<uuid>                   -> deletes the saved progress (right to erasure)
 
 The learner ID is a random UUID made in the learner's browser, so no personal
 data (name, email) is stored. Items expire after a year of no activity.
@@ -58,4 +59,11 @@ def handler(event, context):
         })
         return reply(200, {"saved": True, "updatedAt": now})
 
-    return reply(405, {"error": "use GET or PUT"})
+    if method == "DELETE":
+        learner_id = (event.get("queryStringParameters") or {}).get("learnerId", "")
+        if not UUID.match(learner_id):
+            return reply(400, {"error": "learnerId must be a UUID"})
+        TABLE.delete_item(Key={"learnerId": learner_id})
+        return reply(200, {"deleted": True})
+
+    return reply(405, {"error": "use GET, PUT or DELETE"})

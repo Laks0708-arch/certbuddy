@@ -73,7 +73,7 @@ resource "aws_cloudwatch_log_group" "progress" {
 data "aws_iam_policy_document" "progress" {
   statement {
     sid       = "ReadWriteOnlyThisTable"
-    actions   = ["dynamodb:GetItem", "dynamodb:PutItem"]
+    actions   = ["dynamodb:GetItem", "dynamodb:PutItem", "dynamodb:DeleteItem"]
     resources = [aws_dynamodb_table.progress.arn]
   }
   statement {

@@ -101,3 +101,16 @@ A short entry for every step: what I built, what I learned, and what it cost.
 - Stack order matters: the back-end stack must exist before the front-door stack reads its outputs
 
 **Cost:** $0.00
+
+## Delete my cloud backup (27 Oct 2026)
+
+**Built**
+- Lambda handles `DELETE /api/progress?learnerId=…`
+- Added exactly one permission, `dynamodb:DeleteItem` on the progress table, next to GetItem and PutItem (an additive change; nothing else widened)
+- A "Delete my cloud backup" button on the Account page, with a confirmation step
+
+**Tested:** backup exists `200` → DELETE `200 {"deleted": true}` → GET `404`
+
+**Why:** UK GDPR right to erasure. Learners can remove their data any time instead of waiting for the one-year TTL.
+
+**Cost:** $0.00
