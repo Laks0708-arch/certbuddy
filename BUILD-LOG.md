@@ -118,3 +118,19 @@ A short entry for every step: what I built, what I learned, and what it cost.
 ## Security headers (27 Oct 2026)
 
 Suggested in a LinkedIn comment by a senior engineer. Attached the AWS managed `SecurityHeadersPolicy` to both cache behaviours, so every response now carries `Strict-Transport-Security` (HSTS), `X-Content-Type-Options: nosniff`, `X-Frame-Options`, `Referrer-Policy` and `X-XSS-Protection`. Before: none. One Terraform line per behaviour; cost $0.
+
+## Phase 3: sign-in with Cognito, and my first real bug (27 Oct 2026)
+
+**Built**
+- Cognito user pool (email sign-up, password rules, email verification), Cognito-hosted sign-in pages, a public app client using the authorization code flow with PKCE
+- Lambda checks the access token (via Cognito `GetUser`), checks it was issued for this app, and stores signed-in learners under `u#<user id>`, separate from backup codes
+- The token travels in a custom `x-cb-token` header, because CloudFront's OAC signs the request to Lambda and replaces the `Authorization` header
+- The website signs in, loads progress from the account and saves automatically
+
+**The bug:** sign-in worked, but saving to the account silently failed with 401s. `GetUser` only accepts access tokens that carry the `aws.cognito.signin.user.admin` scope, and the app only requested `openid email`. With no error logging, it was invisible.
+
+**The fix:** request and allow that scope, log every token error, and add `tests/smoke.sh`: 19 automatic checks run after every deploy, including one for this exact bug.
+
+**Lesson:** "it looks like it works" isn't the same as "it works". Check the data really landed, log errors from day one, and turn every bug into a test.
+
+**Cost:** $0.00 (Cognito is free for up to 10,000 monthly users with email sign-in)
