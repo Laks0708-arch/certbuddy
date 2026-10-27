@@ -8,21 +8,28 @@ GET    [?learnerId=<uuid>]                        -> returns the saved progress
 PUT    {"learnerId": "<uuid>"?, "progress": {}}   -> saves the progress
 DELETE [?learnerId=<uuid>]                        -> deletes it (right to erasure)
 
-The token travels in a custom header because CloudFront's origin access control
+Tokens are verified locally against the user pool's public keys (JWKS), so no
+extra scopes or calls to Cognito are needed. The token travels in a custom header because CloudFront's origin access control
 signs the request to Lambda and replaces the standard Authorization header.
 No names or emails are stored. Items expire after a year of no activity.
 """
 import base64
+import hashlib
 import json
 import os
 import re
 import time
+import urllib.request
 
 import boto3
 
 TABLE = boto3.resource("dynamodb").Table(os.environ["TABLE_NAME"])
-COGNITO = boto3.client("cognito-idp")
 CLIENT_ID = os.environ.get("CLIENT_ID", "")
+POOL_ID = os.environ.get("USER_POOL_ID", "")
+ISSUER = f"https://cognito-idp.us-east-1.amazonaws.com/{POOL_ID}"
+_JWKS = {}  # Cognito's public signing keys, cached for the life of the Lambda environment
+# DER prefix that PKCS#1 v1.5 puts before a SHA-256 hash inside an RS256 signature
+SHA256_PREFIX = bytes.fromhex("3031300d060960864801650304020105000420")
 UUID = re.compile(r"^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$")
 MAX_BYTES = 20_000
 ONE_YEAR = 365 * 24 * 3600
@@ -32,10 +39,36 @@ def reply(status, body):
     return {"statusCode": status, "headers": {"Content-Type": "application/json"}, "body": json.dumps(body)}
 
 
-def claims_of(token):
-    """Read the (already verified) token's payload."""
-    payload = token.split(".")[1]
-    return json.loads(base64.urlsafe_b64decode(payload + "=" * (-len(payload) % 4)))
+def b64url(part):
+    return base64.urlsafe_b64decode(part + "=" * (-len(part) % 4))
+
+
+def public_key(kid):
+    """Return (n, e) for the key that signed the token, from the user pool's JWKS."""
+    if kid not in _JWKS:
+        with urllib.request.urlopen(ISSUER + "/.well-known/jwks.json", timeout=3) as resp:
+            for key in json.load(resp)["keys"]:
+                _JWKS[key["kid"]] = (int.from_bytes(b64url(key["n"]), "big"), int.from_bytes(b64url(key["e"]), "big"))
+    return _JWKS[kid]
+
+
+def verify_jwt(token):
+    """Check an RS256 token's signature with Cognito's public key, then its claims."""
+    head_b64, body_b64, sig_b64 = token.split(".")
+    header = json.loads(b64url(head_b64))
+    if header.get("alg") != "RS256":
+        raise ValueError("unexpected algorithm")
+    n, e = public_key(header["kid"])
+    size = (n.bit_length() + 7) // 8
+    signed = pow(int.from_bytes(b64url(sig_b64), "big"), e, n).to_bytes(size, "big")
+    digest = hashlib.sha256(f"{head_b64}.{body_b64}".encode()).digest()
+    expected = b"\x00\x01" + b"\xff" * (size - 3 - len(SHA256_PREFIX) - len(digest)) + b"\x00" + SHA256_PREFIX + digest
+    if signed != expected:
+        raise ValueError("bad signature")
+    claims = json.loads(b64url(body_b64))
+    if claims.get("iss") != ISSUER or claims.get("exp", 0) < time.time():
+        raise ValueError("wrong issuer or expired")
+    return claims
 
 
 def signed_in_key(event):
@@ -44,8 +77,7 @@ def signed_in_key(event):
     if not token:
         return None
     try:
-        COGNITO.get_user(AccessToken=token)          # Cognito checks the signature and expiry
-        claims = claims_of(token)
+        claims = verify_jwt(token)
     except Exception as exc:
         print(f"token check failed: {type(exc).__name__}: {exc}")   # visible in CloudWatch Logs
         raise PermissionError("invalid or expired sign-in") from exc

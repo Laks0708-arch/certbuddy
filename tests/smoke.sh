@@ -37,7 +37,8 @@ check "delete progress"                      "$(code -X DELETE "$SITE/api/progre
 check "deleted progress is gone"             "$(code "$SITE/api/progress?learnerId=$ID")" "404"
 check "bad backup code rejected"             "$(code "$SITE/api/progress?learnerId=hello")" "400"
 
-echo "Sign-in configuration (bug found 27 Oct: GetUser needs this scope)"
+echo "Sign-in configuration"
+check "test-only admin sign-in flow is OFF"  "$(aws cognito-idp describe-user-pool-client --user-pool-id $POOL --client-id "$(aws cognito-idp list-user-pool-clients --user-pool-id $POOL --query 'UserPoolClients[0].ClientId' --output text)" --query 'UserPoolClient.ExplicitAuthFlows' --output text | grep -c ADMIN_USER_PASSWORD)" "0"
 CLIENT=$(aws cognito-idp list-user-pool-clients --user-pool-id $POOL --query 'UserPoolClients[0].ClientId' --output text 2>/dev/null)
 SCOPES=$(aws cognito-idp describe-user-pool-client --user-pool-id $POOL --client-id "$CLIENT" --query 'UserPoolClient.AllowedOAuthScopes' --output text 2>/dev/null)
 check "app client allows the admin scope"    "$(echo "$SCOPES" | grep -c 'aws.cognito.signin.user.admin')" "1"

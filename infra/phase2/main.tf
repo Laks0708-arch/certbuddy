@@ -110,8 +110,9 @@ resource "aws_lambda_function" "progress" {
 
   environment {
     variables = {
-      TABLE_NAME = aws_dynamodb_table.progress.name
-      CLIENT_ID  = aws_cognito_user_pool_client.web.id
+      TABLE_NAME   = aws_dynamodb_table.progress.name
+      CLIENT_ID    = aws_cognito_user_pool_client.web.id
+      USER_POOL_ID = aws_cognito_user_pool.learners.id
     }
   }
 

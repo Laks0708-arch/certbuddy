@@ -134,3 +134,10 @@ Suggested in a LinkedIn comment by a senior engineer. Attached the AWS managed `
 **Lesson:** "it looks like it works" isn't the same as "it works". Check the data really landed, log errors from day one, and turn every bug into a test.
 
 **Cost:** $0.00 (Cognito is free for up to 10,000 monthly users with email sign-in)
+
+**Follow-up (same day): a better fix.** The scope fix only helped new sign-ins, and an old token in a browser tab kept failing. So Lambda now verifies tokens itself: it fetches the user pool's public keys (JWKS), checks the RS256 signature, the issuer, the expiry, the token type and the client ID. No scope or call to Cognito is needed, and it's faster.
+
+**Tested before announcing it:** with a temporary test user (deleted afterwards) and a temporary admin sign-in flow (switched off afterwards, with a smoke test to prove it's off): save 200, load 200, item in DynamoDB under `u#<sub>`, delete 200.
+- A first "tampering" test passed when it shouldn't have. Investigation showed the test itself was flawed: changing the last base64 character of a 256-byte signature doesn't change its bytes.
+- Re-tested by changing the middle of the signature and the payload: both 401, with logs showing `ValueError: bad signature` from the new code.
+- Smoke tests: 20/20.
