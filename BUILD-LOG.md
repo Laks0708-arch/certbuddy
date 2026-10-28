@@ -152,3 +152,13 @@ Suggested in a LinkedIn comment by a senior engineer. Attached the AWS managed `
 - **Fix:** I ran `terraform plan`, which showed `~ "TABLE_NAME" = "certbuddy-progres" -> "certbuddy-progress"` (0 to destroy), then `terraform apply` to change the spelling back to what it should be.
 - **Proof:** I ran the smoke tests (20/20 passed) and checked on the website myself: Sync now worked.
 - **What I learned:** read every word of an error, including spelling. An error can name the effect (AccessDenied) rather than the cause (a wrong name). Fix with code, not by hand, then verify.
+
+## Phase 4: monitoring and alarms (28 Oct 2026, I ran it myself)
+
+- I set up two CloudWatch alarms: one for Lambda errors (any error in 5 minutes) and one for the website (CloudFront 5xx error rate above 5%).
+- They send an email through an SNS topic to both of my email addresses. I confirmed both subscriptions.
+- I tested it by forcing the alarm into the ALARM state with `aws cloudwatch set-alarm-state`. The email arrived in both inboxes within a minute, and an OK email followed once it rechecked.
+- I added 3 monitoring checks to the smoke tests (alarms exist, emails confirmed); the total is now 23, all passing.
+- **Design decision:** I first chose only the Lambda alarm. On review, I added the website alarm, because a front-end outage (like the Phase 1 bucket-policy break) wouldn't trip a Lambda alarm. Next, scheduled smoke tests in CI will also catch 4xx problems such as a 403.
+
+**Cost:** $0.00 (within the free 10 alarms and 1,000 SNS emails)
