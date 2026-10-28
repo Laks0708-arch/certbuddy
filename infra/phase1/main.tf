@@ -260,3 +260,21 @@ resource "aws_s3_object" "lessons" {
   content_type  = lookup(local.mime_types, reverse(split(".", each.value))[0], "application/octet-stream")
   cache_control = endswith(each.value, ".mp3") ? "max-age=86400" : "max-age=300"
 }
+
+# ---------- Phase 4: alarm when visitors start getting server errors ----------
+# CloudFront metrics live in us-east-1 with Region = "Global".
+resource "aws_cloudwatch_metric_alarm" "site_5xx" {
+  alarm_name          = "certbuddy-site-5xx-errors"
+  alarm_description   = "More than 5% of CertBuddy visitors got server (5xx) errors in the last 5 minutes."
+  namespace           = "AWS/CloudFront"
+  metric_name         = "5xxErrorRate"
+  dimensions          = { DistributionId = aws_cloudfront_distribution.site.id, Region = "Global" }
+  statistic           = "Average"
+  period              = 300
+  evaluation_periods  = 1
+  comparison_operator = "GreaterThanThreshold"
+  threshold           = 5
+  treat_missing_data  = "notBreaching"
+  alarm_actions       = [data.terraform_remote_state.backend.outputs.alerts_topic_arn]
+  ok_actions          = [data.terraform_remote_state.backend.outputs.alerts_topic_arn]
+}

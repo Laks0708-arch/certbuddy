@@ -45,6 +45,11 @@ check "app client allows the admin scope"    "$(echo "$SCOPES" | grep -c 'aws.co
 check "website requests the admin scope"     "$(curl -s $SITE/ | grep -c 'aws.cognito.signin.user.admin')" "1"
 check "website uses the right client ID"     "$(curl -s $SITE/config.js | grep -c "$CLIENT")" "1"
 
+echo "Monitoring"
+check "Lambda errors alarm exists"            "$(aws cloudwatch describe-alarms --alarm-names certbuddy-progress-lambda-errors --query 'length(MetricAlarms)' --output text 2>/dev/null)" "1"
+check "website 5xx alarm exists"              "$(aws cloudwatch describe-alarms --alarm-names certbuddy-site-5xx-errors --query 'length(MetricAlarms)' --output text 2>/dev/null)" "1"
+check "both alert emails are confirmed"       "$(aws sns list-subscriptions-by-topic --topic-arn arn:aws:sns:us-east-1:398370181625:certbuddy-alerts --query 'Subscriptions[].SubscriptionArn' --output text 2>/dev/null | tr '\t' '\n' | grep -c '^arn:')" "2"
+
 echo
 echo "Passed: $pass   Failed: $fail"
 [ "$fail" -eq 0 ]
