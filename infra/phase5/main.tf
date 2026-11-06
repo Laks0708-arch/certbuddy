@@ -17,7 +17,10 @@ provider "aws" {
 
 locals {
   account = "398370181625"
-  repo    = "Laks0708-arch/certbuddy"
+  # GitHub's "immutable subject": owner and repo names plus their ID numbers, so a
+  # re-created repo with the same name can't use this role. Check with:
+  #   gh api repos/Laks0708-arch/certbuddy/actions/oidc/customization/sub
+  repo = "Laks0708-arch@333517398/certbuddy@1432197398"
 }
 
 # The "ID checker": tells AWS to trust tokens signed by GitHub Actions.

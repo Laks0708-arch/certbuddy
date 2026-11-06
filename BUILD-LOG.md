@@ -162,3 +162,19 @@ Suggested in a LinkedIn comment by a senior engineer. Attached the AWS managed `
 - **Design decision:** I first chose only the Lambda alarm. On review, I added the website alarm, because a front-end outage (like the Phase 1 bucket-policy break) wouldn't trip a Lambda alarm. Next, scheduled smoke tests in CI will also catch 4xx problems such as a 403.
 
 **Cost:** $0.00 (within the free 10 alarms and 1,000 SNS emails)
+
+## Phase 5a: scheduled smoke tests in GitHub Actions (6 Nov 2026, built on a plane over Starlink)
+
+- GitHub Actions now runs all 23 smoke tests every 6 hours (and on demand). GitHub emails me if a run fails, so it catches problems the alarms miss, like a 403 on the website.
+- **No AWS keys stored in GitHub.** The workflow signs in with **OIDC**: GitHub signs a token saying which repo and branch it is, and AWS swaps it for 1-hour credentials for a role.
+- The role (`certbuddy-github-smoke-tests`, in `infra/phase5`) is read-only: 5 actions, each on one named resource, no `*`.
+- The trust policy only accepts tokens from **my repo, main branch**, so another repo, or another branch with an edited workflow, can't use it.
+- Applied with a saved plan (`terraform plan -out` then `apply` of that file), so exactly the reviewed change was made.
+
+**The bug:** the first run failed with `Not authorized to perform sts:AssumeRoleWithWebIdentity`. The trust policy expected `repo:Laks0708-arch/certbuddy:...`, but my repo sends GitHub's newer *immutable subject*, which includes the owner and repo ID numbers: `repo:Laks0708-arch@333517398/certbuddy@1432197398:...`. Found it by asking GitHub what it sends (`gh api repos/Laks0708-arch/certbuddy/actions/oidc/customization/sub`). Fixed the trust policy (plan: 1 to change, 0 to destroy).
+
+**Proof:** second run passed, 23/23: https://github.com/Laks0708-arch/certbuddy/actions/runs/42203375145
+
+**Lesson:** "Not authorized" named the effect; the cause was a value that didn't match. Check what the other side actually sends instead of assuming. The ID numbers are also more secure: a re-created repo with my name couldn't use the role.
+
+**Cost:** $0.00 (GitHub Actions is free for public repos; IAM and STS are free)
