@@ -1,0 +1,28 @@
+# Runs tests/smoke.sh against the live site every 6 hours, and on demand.
+# GitHub emails me if it fails. No AWS keys stored here: it signs in with OIDC (see infra/phase5).
+name: Smoke tests
+
+on:
+  schedule:
+    - cron: "17 */6 * * *" # every 6 hours, at 17 minutes past (avoids the busy top of the hour)
+  workflow_dispatch: # "Run workflow" button for a manual check
+
+permissions:
+  id-token: write # allows GitHub to create the OIDC token AWS checks
+  contents: read
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Sign in to AWS with a short-lived role (no stored keys)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::398370181625:role/certbuddy-github-smoke-tests
+          aws-region: us-east-1
+
+      - name: Run the smoke tests
+        run: sh tests/smoke.sh
